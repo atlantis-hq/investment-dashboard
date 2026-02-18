@@ -4,5 +4,5 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  base: '/investment-dashboard/',
+  base: process.env.GITHUB_PAGES ? '/investment-dashboard/' : '/',
 })
