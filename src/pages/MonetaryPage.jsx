@@ -1,11 +1,10 @@
 import KPI from '../components/KPI';
 import Card from '../components/Card';
 import DataTable from '../components/DataTable';
-import { monetaryFunds } from '../data/portfolio';
+import { usePortfolio } from '../hooks/usePortfolioData';
 import { Landmark } from 'lucide-react';
 
-const fmt = (v) => '€' + v.toLocaleString('es-ES');
-const total = monetaryFunds.reduce((s, f) => s + f.current, 0);
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
 
 const columns = [
   { key: 'name', label: 'Nombre', render: (v) => <span className="font-medium text-white">{v}</span> },
@@ -16,12 +15,16 @@ const columns = [
 ];
 
 export default function MonetaryPage() {
+  const { monetaryFunds } = usePortfolio();
+  const total = monetaryFunds.reduce((s, f) => s + f.current, 0);
+  const avgRate = monetaryFunds.length ? (monetaryFunds.reduce((s, f) => s + (f.rate || 0), 0) / monetaryFunds.length).toFixed(2) : '0';
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Fondos Monetarios</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <KPI label="Valor Total" value={total} icon={Landmark} />
-        <KPI label="Tipo Medio" value={(monetaryFunds.reduce((s, f) => s + f.rate, 0) / monetaryFunds.length).toFixed(2)} prefix="" change={1.69} />
+        <KPI label="Tipo Medio" value={avgRate} prefix="" />
       </div>
       <Card title="Detalle de Fondos Monetarios">
         <DataTable columns={columns} data={monetaryFunds} />

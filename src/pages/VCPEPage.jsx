@@ -1,10 +1,10 @@
 import KPI from '../components/KPI';
 import Card from '../components/Card';
 import DataTable from '../components/DataTable';
-import { vcPe, vcPeFunds } from '../data/portfolio';
+import { usePortfolio } from '../hooks/usePortfolioData';
 import { Rocket } from 'lucide-react';
 
-const fmt = (v) => '€' + v.toLocaleString('es-ES');
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
 
 const directCols = [
   { key: 'name', label: 'Inversión', render: (v) => <span className="font-medium text-white">{v}</span> },
@@ -23,10 +23,11 @@ const fundCols = [
   { key: 'vintage', label: 'Año', align: 'right', render: (v) => <span className="text-[#94a3b8]">{v}</span> },
 ];
 
-const totalDirect = vcPe.reduce((s, v) => s + v.invested, 0);
-const totalFunds = vcPeFunds.reduce((s, v) => s + v.called, 0);
-
 export default function VCPEPage() {
+  const { vcPe, vcPeFunds } = usePortfolio();
+  const totalDirect = vcPe.reduce((s, v) => s + v.invested, 0);
+  const totalFunds = vcPeFunds.reduce((s, v) => s + v.called, 0);
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Venture Capital + Private Equity</h2>

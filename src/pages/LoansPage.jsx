@@ -2,12 +2,10 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import KPI from '../components/KPI';
 import Card from '../components/Card';
 import DataTable from '../components/DataTable';
-import { loans, loansSummary as ls } from '../data/portfolio';
+import { usePortfolio } from '../hooks/usePortfolioData';
 import { Handshake, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 
-const fmt = (v) => '€' + v.toLocaleString('es-ES');
-
-const tirData = loans.map(l => ({ name: `#${l.id}`, tir: l.tir, platform: l.platform }));
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
 
 const columns = [
   { key: 'id', label: '#', render: (v) => <span className="text-[#64748b] font-mono">{v}</span> },
@@ -26,6 +24,9 @@ const columns = [
 ];
 
 export default function LoansPage() {
+  const { loans, loansSummary: ls } = usePortfolio();
+  const tirData = loans.map(l => ({ name: `#${l.id}`, tir: l.tir, platform: l.platform }));
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Préstamos</h2>
