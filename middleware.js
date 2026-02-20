@@ -1,5 +1,7 @@
-const USER = 'asier';
-const PASS = 'bentor2026';
+const USERS = {
+  asier: '137230',
+  igor: '137230',
+};
 
 export default function middleware(request) {
   const auth = request.headers.get('authorization');
@@ -9,7 +11,7 @@ export default function middleware(request) {
     if (scheme === 'Basic') {
       const decoded = atob(encoded);
       const [user, pass] = decoded.split(':');
-      if (user === USER && pass === PASS) {
+      if (USERS[user] && USERS[user] === pass) {
         return undefined;
       }
     }
