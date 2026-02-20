@@ -1,13 +1,14 @@
-import { LayoutDashboard, TrendingUp, Landmark, Bitcoin, BarChart3, Handshake, Rocket, X } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Landmark, Bitcoin, Shield, Handshake, Building2, Rocket, X } from 'lucide-react';
 
 const nav = [
   { id: 'overview', label: 'Resumen', icon: LayoutDashboard },
   { id: 'etfs', label: 'ETFs + Fondos', icon: TrendingUp },
   { id: 'monetary', label: 'Fondos Monetarios', icon: Landmark },
   { id: 'crypto', label: 'Criptomonedas', icon: Bitcoin },
-  { id: 'stocks', label: 'Renta Variable', icon: BarChart3 },
+  { id: 'rentafija', label: 'Renta Fija', icon: Shield },
   { id: 'loans', label: 'Préstamos', icon: Handshake },
-  { id: 'vcpe', label: 'VC + PE', icon: Rocket },
+  { id: 'pe', label: 'Private Equity', icon: Building2 },
+  { id: 'vc', label: 'VC Startups', icon: Rocket },
 ];
 
 export default function Sidebar({ page, setPage, open, setOpen }) {
@@ -39,7 +40,7 @@ export default function Sidebar({ page, setPage, open, setOpen }) {
           ))}
         </nav>
         <div className="p-4 border-t border-[#1e293b] text-xs text-[#64748b]">
-          Última actualización: 18 Feb 2026
+          Última actualización: 20 Feb 2026
         </div>
       </aside>
     </>

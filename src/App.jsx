@@ -4,9 +4,10 @@ import Overview from './pages/Overview';
 import ETFsPage from './pages/ETFsPage';
 import MonetaryPage from './pages/MonetaryPage';
 import CryptoPage from './pages/CryptoPage';
-import StocksPage from './pages/StocksPage';
+import RentaFijaPage from './pages/RentaFijaPage';
 import LoansPage from './pages/LoansPage';
-import VCPEPage from './pages/VCPEPage';
+import PEPage from './pages/PEPage';
+import VCPage from './pages/VCPage';
 import { PortfolioProvider } from './hooks/usePortfolioData';
 
 const pages = {
@@ -14,9 +15,10 @@ const pages = {
   etfs: ETFsPage,
   monetary: MonetaryPage,
   crypto: CryptoPage,
-  stocks: StocksPage,
+  rentafija: RentaFijaPage,
   loans: LoansPage,
-  vcpe: VCPEPage,
+  pe: PEPage,
+  vc: VCPage,
 };
 
 export default function App() {

@@ -1,105 +1,182 @@
-// Portfolio data - hardcoded from Asier's Google Sheets
-// Last updated: 2026-02-18
+// Portfolio data - from Asier's Google Sheets (real data)
+// Last updated: 2026-02-20
 
 export const portfolioSummary = {
-  totalValue: 892450,
-  totalInvested: 745200,
-  totalReturn: 147250,
-  totalReturnPct: 19.76,
-  lastUpdated: '2026-02-18',
+  totalValue: 1032528,
+  totalInvested: 1024334,
+  totalReturn: 8194,
+  totalReturnPct: 0.80,
+  lastUpdated: '2026-02-20',
 };
 
 export const categoryAllocation = [
-  { name: 'ETFs + Fondos', value: 285000, color: '#3b82f6', invested: 245000, return: 16.33 },
-  { name: 'Fondos Monetarios', value: 120000, color: '#06b6d4', invested: 118000, return: 1.69 },
-  { name: 'Criptomonedas', value: 95000, color: '#f59e0b', invested: 52000, return: 82.69 },
-  { name: 'Renta Variable', value: 78500, color: '#10b981', invested: 65000, return: 20.77 },
-  { name: 'Préstamos', value: 237880, color: '#8b5cf6', invested: 237880, return: 11.2 },
-  { name: 'VC + PE', value: 45000, color: '#ec4899', invested: 45000, return: 0 },
-  { name: 'Fondos VC + PE', value: 31070, color: '#f43f5e', invested: 30000, return: 3.57 },
+  { name: 'ETFs + Fondos', value: 176012, color: '#3b82f6', invested: 128454, return: 37.02 },
+  { name: 'Fondos Monetarios', value: 68674, color: '#06b6d4', invested: 70000, return: -1.90 },
+  { name: 'Criptomonedas', value: 57089, color: '#f59e0b', invested: 78000, return: -26.81 },
+  { name: 'Renta Fija', value: 70132, color: '#10b981', invested: 70000, return: 0.19 },
+  { name: 'Préstamos', value: 289294, color: '#8b5cf6', invested: 237880, return: 21.61 },
+  { name: 'PE', value: 290000, color: '#ec4899', invested: 290000, return: 0 },
+  { name: 'VC Startups', value: 150000, color: '#f43f5e', invested: 150000, return: 0 },
 ];
 
 export const etfsFunds = [
-  { name: 'Vanguard FTSE All-World UCITS ETF', ticker: 'VWCE', invested: 80000, current: 95200, returnPct: 19.0, type: 'ETF' },
-  { name: 'iShares Core MSCI World', ticker: 'IWDA', invested: 60000, current: 71400, returnPct: 19.0, type: 'ETF' },
-  { name: 'iShares MSCI EM IMI', ticker: 'EIMI', invested: 25000, current: 26750, returnPct: 7.0, type: 'ETF' },
-  { name: 'Amundi IS MSCI World', ticker: 'CW8', invested: 30000, current: 35100, returnPct: 17.0, type: 'Fondo' },
-  { name: 'MyInvestor Indexado Global', ticker: 'MYINV-G', invested: 30000, current: 34200, returnPct: 14.0, type: 'Fondo' },
-  { name: 'Vanguard Global Bond Index', ticker: 'VBND', invested: 20000, current: 22350, returnPct: 11.75, type: 'Fondo' },
+  {
+    name: 'Gestivalue Cap (Andbank)',
+    ticker: 'Gestivalue Cap',
+    invested: 128454.36,
+    current: 176011.73,
+    returnPct: 37.02,
+    shares: 1,
+    type: 'Fondo',
+    status: 'Activo',
+    dateEntry: '01/01/2024',
+  },
 ];
 
 export const monetaryFunds = [
-  { name: 'MyInvestor Cuenta Remunerada', invested: 50000, current: 50850, rate: 1.7, type: 'Cuenta' },
-  { name: 'Groupama Trésorerie IC', invested: 35000, current: 35630, rate: 1.8, type: 'Fondo Monetario' },
-  { name: 'AXA Trésor Court Terme', invested: 33000, current: 33520, rate: 1.58, type: 'Fondo Monetario' },
+  {
+    name: 'Oro Físico (100g x5)',
+    ticker: 'XAUEUR',
+    invested: 70000,
+    current: 68673.71,
+    rate: null,
+    type: 'Oro Físico',
+    status: 'Hold',
+    units: 5,
+    unitWeight: '100g',
+  },
 ];
 
 export const crypto = [
-  { name: 'Bitcoin', ticker: 'BTC', amount: 0.85, avgPrice: 32000, currentPrice: 72000, invested: 27200, current: 61200 },
-  { name: 'Ethereum', ticker: 'ETH', amount: 8.5, avgPrice: 1800, currentPrice: 2900, invested: 15300, current: 24650 },
-  { name: 'Solana', ticker: 'SOL', amount: 60, avgPrice: 45, currentPrice: 98, invested: 2700, current: 5880 },
-  { name: 'Chainlink', ticker: 'LINK', amount: 200, avgPrice: 12, currentPrice: 16.35, invested: 2400, current: 3270 },
-  { name: 'Stablecoins (USDC/USDT)', ticker: 'USDC', amount: null, avgPrice: null, currentPrice: null, invested: 4400, current: 4400 },
+  {
+    name: 'Bitcoin',
+    ticker: 'BTC',
+    amount: 1.04,
+    avgPrice: 75000,
+    currentPrice: 57089.42,
+    invested: 78000,
+    current: 57089.42,
+  },
 ];
 
-export const stocks = [
-  { name: 'Apple Inc.', ticker: 'AAPL', shares: 50, avgPrice: 145, currentPrice: 198, invested: 7250, current: 9900 },
-  { name: 'Microsoft Corp.', ticker: 'MSFT', shares: 25, avgPrice: 280, currentPrice: 415, invested: 7000, current: 10375 },
-  { name: 'NVIDIA Corp.', ticker: 'NVDA', shares: 15, avgPrice: 450, currentPrice: 820, invested: 6750, current: 12300 },
-  { name: 'ASML Holding', ticker: 'ASML', shares: 8, avgPrice: 580, currentPrice: 720, invested: 4640, current: 5760 },
-  { name: 'Inditex', ticker: 'ITX.MC', shares: 100, avgPrice: 32, currentPrice: 46.5, invested: 3200, current: 4650 },
-  { name: 'LVMH', ticker: 'MC.PA', shares: 5, avgPrice: 680, currentPrice: 785, invested: 3400, current: 3925 },
-  { name: 'Tesla Inc.', ticker: 'TSLA', shares: 20, avgPrice: 220, currentPrice: 310, invested: 4400, current: 6200 },
-  { name: 'Amazon.com', ticker: 'AMZN', shares: 30, avgPrice: 130, currentPrice: 195, invested: 3900, current: 5850 },
-  { name: 'Alphabet Inc.', ticker: 'GOOGL', shares: 25, avgPrice: 120, currentPrice: 175, invested: 3000, current: 4375 },
-  { name: 'CrowdStrike', ticker: 'CRWD', shares: 10, avgPrice: 180, currentPrice: 350, invested: 1800, current: 3500 },
-  { name: 'Berkshire Hathaway B', ticker: 'BRK.B', shares: 5, avgPrice: 345, currentPrice: 440, invested: 1725, current: 2200 },
-  { name: 'Visa Inc.', ticker: 'V', shares: 10, avgPrice: 240, currentPrice: 290, invested: 2400, current: 2900 },
-  { name: 'Otros', ticker: 'VARIOS', shares: null, avgPrice: null, currentPrice: null, invested: 15535, current: 6565 },
+export const rentaFija = [
+  {
+    name: 'Revolut Renta Fija',
+    product: 'Cuenta Remunerada',
+    capital: 70000,
+    tae: 2.27,
+    startDate: '20/01/2026',
+    months: 1,
+    interestAccrued: 132.42,
+    currentValue: 70132.42,
+    status: 'Activo',
+  },
 ];
 
 export const loans = [
-  { id: 1, platform: 'Habitalia', project: 'Proyecto Residencial Getafe', capital: 15000, interestRate: 10.5, tir: 10.5, term: 18, startDate: '2024-06-15', status: 'Activo', capitalPending: 15000, interestEarned: 1312 },
-  { id: 2, platform: 'Habitalia', project: 'Reforma Integral Chamberí', capital: 12000, interestRate: 11.0, tir: 11.0, term: 12, startDate: '2024-07-01', status: 'Activo', capitalPending: 12000, interestEarned: 880 },
-  { id: 3, platform: 'Habitalia', project: 'Promoción Valdebebas', capital: 18000, interestRate: 9.5, tir: 9.5, term: 24, startDate: '2024-03-10', status: 'Activo', capitalPending: 18000, interestEarned: 1710 },
-  { id: 4, platform: 'Habitalia', project: 'Rehabilitación Malasaña', capital: 10000, interestRate: 12.0, tir: 12.0, term: 12, startDate: '2024-08-20', status: 'Activo', capitalPending: 10000, interestEarned: 600 },
-  { id: 5, platform: 'Bentor', project: 'Solar Logístico Getafe', capital: 20000, interestRate: 9.0, tir: 9.0, term: 18, startDate: '2024-05-01', status: 'Activo', capitalPending: 20000, interestEarned: 1500 },
-  { id: 6, platform: 'Habitalia', project: 'Viviendas Carabanchel', capital: 8000, interestRate: 11.5, tir: 11.5, term: 15, startDate: '2024-09-01', status: 'Activo', capitalPending: 8000, interestEarned: 460 },
-  { id: 7, platform: 'Bentor', project: 'Nave Industrial Coslada', capital: 15000, interestRate: 10.0, tir: 10.0, term: 24, startDate: '2024-04-15', status: 'Activo', capitalPending: 15000, interestEarned: 1500 },
-  { id: 8, platform: 'Habitalia', project: 'Pisos Turísticos Centro', capital: 12000, interestRate: 13.0, tir: 13.0, term: 12, startDate: '2024-10-01', status: 'Activo', capitalPending: 12000, interestEarned: 650 },
-  { id: 9, platform: 'Habitalia', project: 'Residencial Pozuelo', capital: 10000, interestRate: 10.5, tir: 10.5, term: 18, startDate: '2024-06-01', status: 'Activo', capitalPending: 10000, interestEarned: 875 },
-  { id: 10, platform: 'Bentor', project: 'Oficinas Tres Cantos', capital: 8000, interestRate: 9.5, tir: 9.5, term: 12, startDate: '2024-11-01', status: 'Activo', capitalPending: 8000, interestEarned: 253 },
-  { id: 11, platform: 'Habitalia', project: 'Lofts Arganzuela', capital: 14000, interestRate: 11.0, tir: 11.0, term: 15, startDate: '2024-07-15', status: 'Activo', capitalPending: 14000, interestEarned: 1027 },
-  { id: 12, platform: 'Bentor', project: 'Complejo Residencial Rivas', capital: 16000, interestRate: 10.0, tir: 10.0, term: 24, startDate: '2024-02-01', status: 'Activo', capitalPending: 16000, interestEarned: 1600 },
-  { id: 13, platform: 'Habitalia', project: 'Reforma Chueca', capital: 6000, interestRate: 13.3, tir: 13.3, term: 12, startDate: '2024-12-01', status: 'Activo', capitalPending: 6000, interestEarned: 166 },
-  { id: 14, platform: 'Habitalia', project: 'Áticos Salamanca', capital: 10000, interestRate: 12.5, tir: 12.5, term: 18, startDate: '2024-08-01', status: 'Amortizado', capitalPending: 0, interestEarned: 1250 },
-  { id: 15, platform: 'Bentor', project: 'Retail Park Alcorcón', capital: 12000, interestRate: 9.0, tir: 9.0, term: 12, startDate: '2024-05-15', status: 'Amortizado', capitalPending: 0, interestEarned: 1080 },
-  { id: 16, platform: 'Habitalia', project: 'Coliving Tetuán', capital: 8880, interestRate: 11.0, tir: 11.0, term: 15, startDate: '2024-09-15', status: 'Activo', capitalPending: 8880, interestEarned: 407 },
-  { id: 17, platform: 'Bentor', project: 'Parcelas Villanueva', capital: 10000, interestRate: 9.5, tir: 9.5, term: 18, startDate: '2024-06-20', status: 'Activo', capitalPending: 10000, interestEarned: 792 },
-  { id: 18, platform: 'Habitalia', project: 'Garajes Méndez Álvaro', capital: 5000, interestRate: 10.0, tir: 10.0, term: 12, startDate: '2024-10-15', status: 'Activo', capitalPending: 5000, interestEarned: 167 },
-  { id: 19, platform: 'Habitalia', project: 'Estudios Lavapiés', capital: 12000, interestRate: 12.0, tir: 12.0, term: 15, startDate: '2024-07-01', status: 'Activo', capitalPending: 12000, interestEarned: 960 },
-  { id: 20, platform: 'Bentor', project: 'Almacén Logístico Pinto', capital: 8000, interestRate: 9.0, tir: 9.0, term: 24, startDate: '2024-03-01', status: 'Activo', capitalPending: 8000, interestEarned: 720 },
-  { id: 21, platform: 'Habitalia', project: 'Coworking San Sebastián de los Reyes', capital: 8000, interestRate: 10.5, tir: 10.5, term: 18, startDate: '2024-11-01', status: 'Activo', capitalPending: 8000, interestEarned: 280 },
+  { id: 1, platform: 'Habitalia', project: 'Habitalia #1', capital: 8894, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 10, capitalCobrado: 5188.17, interesTotal: 2134.44, capitalPending: 3705.83, interestEarned: 1245.09 },
+  { id: 2, platform: 'Habitalia', project: 'Habitalia #2', capital: 8984, interestRate: 13.0, tir: 13.0, term: 24, startDate: '20/01/2025', endDate: '20/12/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 11, capitalCobrado: 4866.33, interesTotal: 2335.85, capitalPending: 4117.67, interestEarned: 1265.25 },
+  { id: 3, platform: 'Habitalia', project: 'Habitalia #3', capital: 7282.50, interestRate: 13.33, tir: 13.33, term: 18, startDate: '20/11/2024', endDate: '20/04/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 3, capitalCobrado: 6068.75, interesTotal: 1456.50, capitalPending: 1213.75, interestEarned: 1213.75 },
+  { id: 4, platform: 'Habitalia', project: 'Habitalia #4', capital: 7765, interestRate: 13.0, tir: 13.0, term: 24, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 10, capitalCobrado: 4529.58, interesTotal: 2018.80, capitalPending: 3235.42, interestEarned: 1177.63 },
+  { id: 5, platform: 'Habitalia', project: 'Habitalia #5', capital: 12694, interestRate: 12.5, tir: 12.5, term: 24, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 10, capitalCobrado: 7404.83, interesTotal: 3173.45, capitalPending: 5289.17, interestEarned: 1851.18 },
+  { id: 6, platform: 'Habitalia', project: 'Habitalia #6', capital: 7131, interestRate: 13.33, tir: 13.33, term: 18, startDate: '20/12/2024', endDate: '20/05/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 4, capitalCobrado: 5546.33, interesTotal: 1426.20, capitalPending: 1584.67, interestEarned: 1109.27 },
+  { id: 7, platform: 'Habitalia', project: 'Habitalia #7', capital: 4750, interestRate: 13.33, tir: 13.33, term: 18, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 5, capitalCobrado: 3430.56, interesTotal: 949.90, capitalPending: 1319.44, interestEarned: 686.04 },
+  { id: 8, platform: 'Habitalia', project: 'Habitalia #8', capital: 6834, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 12, capitalCobrado: 3417, interesTotal: 1640.16, capitalPending: 3417, interestEarned: 820.08 },
+  { id: 9, platform: 'Habitalia', project: 'Habitalia #9', capital: 5673, interestRate: 13.33, tir: 13.33, term: 18, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 5, capitalCobrado: 4097.17, interesTotal: 1134.60, capitalPending: 1575.83, interestEarned: 819.43 },
+  { id: 10, platform: 'Habitalia', project: 'Habitalia #10', capital: 10857, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 12, capitalCobrado: 5428.50, interesTotal: 2605.68, capitalPending: 5428.50, interestEarned: 1302.84 },
+  { id: 11, platform: 'Habitalia', project: 'Habitalia #11', capital: 7844, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 13, capitalCobrado: 3595.17, interesTotal: 1882.56, capitalPending: 4248.83, interestEarned: 862.84 },
+  { id: 12, platform: 'Habitalia', project: 'Habitalia #12', capital: 7347, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 13, capitalCobrado: 3367.38, interesTotal: 1763.28, capitalPending: 3979.62, interestEarned: 808.17 },
+  { id: 13, platform: 'Habitalia', project: 'Habitalia #13', capital: 15103, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 13, capitalCobrado: 6922.21, interesTotal: 3624.72, capitalPending: 8180.79, interestEarned: 1661.33 },
+  { id: 14, platform: 'Habitalia', project: 'Habitalia #14', capital: 7672, interestRate: 13.33, tir: 13.33, term: 18, startDate: '20/03/2025', endDate: '20/08/2026', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 7, capitalCobrado: 4688.44, interesTotal: 1534.40, capitalPending: 2983.56, interestEarned: 937.69 },
+  { id: 15, platform: 'Habitalia', project: 'Habitalia #15', capital: 10959.50, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 14, capitalCobrado: 4566.46, interesTotal: 2630.28, capitalPending: 6393.04, interestEarned: 1095.95 },
+  { id: 16, platform: 'Habitalia', project: 'Habitalia #16', capital: 9925, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 14, capitalCobrado: 4135.42, interesTotal: 2382, capitalPending: 5789.58, interestEarned: 992.50 },
+  { id: 17, platform: 'Habitalia', project: 'Habitalia #17', capital: 9213, interestRate: 12.0, tir: 12.0, term: 24, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 9, cuotasRestantes: 15, capitalCobrado: 3454.87, interesTotal: 2211.12, capitalPending: 5758.12, interestEarned: 829.17 },
+  { id: 18, platform: 'Habitalia', project: 'Habitalia #18', capital: 11353, interestRate: 10.0, tir: 10.0, term: 24, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 6, cuotasRestantes: 18, capitalCobrado: 2838.25, interesTotal: 2270.60, capitalPending: 8514.75, interestEarned: 567.65 },
+  { id: 19, platform: 'Habitalia', project: 'Habitalia #19', capital: 13599, interestRate: 10.0, tir: 10.0, term: 24, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 6, cuotasRestantes: 18, capitalCobrado: 3399.75, interesTotal: 2719.80, capitalPending: 10199.25, interestEarned: 679.95 },
+  { id: 20, platform: 'Habitalia', project: 'Habitalia #20', capital: 19000, interestRate: 9.0, tir: 9.0, term: 24, startDate: '20/11/2025', endDate: '20/10/2027', status: 'Activo', cuotasPagadas: 1, cuotasRestantes: 23, capitalCobrado: 791.67, interesTotal: 3420, capitalPending: 18208.33, interestEarned: 142.50 },
+  { id: 21, platform: 'Habitalia', project: 'Habitalia #21', capital: 45000, interestRate: 9.0, tir: 9.0, term: 24, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 7, cuotasRestantes: 17, capitalCobrado: 13125, interesTotal: 8100, capitalPending: 31875, interestEarned: 2362.50 },
 ];
 
-export const vcPe = [
-  { name: 'Startup Fintech A (Serie A)', invested: 15000, valuation: 15000, status: 'Activo', vintage: 2024 },
-  { name: 'Startup SaaS B (Seed)', invested: 10000, valuation: 10000, status: 'Activo', vintage: 2024 },
-  { name: 'Startup DeepTech C (Serie A)', invested: 10000, valuation: 10000, status: 'Activo', vintage: 2025 },
-  { name: 'SPV Proptech D', invested: 10000, valuation: 10000, status: 'Activo', vintage: 2025 },
+export const privateEquity = [
+  {
+    name: 'Rebel Tickets',
+    participation: 3.38,
+    companyValuation: 2000000,
+    invested: 75000,
+    currentValue: 67600,
+    multiple: 0.90,
+  },
+  {
+    name: 'Habitalia',
+    participation: 35,
+    companyValuation: 2000000,
+    invested: 180000,
+    currentValue: 700000,
+    multiple: 3.89,
+  },
+  {
+    name: 'FutureChat',
+    participation: 10,
+    companyValuation: 500000,
+    invested: 35000,
+    currentValue: 50000,
+    multiple: 1.43,
+  },
 ];
 
-export const vcPeFunds = [
-  { name: 'Fondo VC España I', committed: 15000, called: 12000, nav: 12850, dpi: 0, tvpi: 1.07, vintage: 2023 },
-  { name: 'Fondo PE Europa II', committed: 20000, called: 18000, nav: 18220, dpi: 0, tvpi: 1.01, vintage: 2024 },
+export const vcStartups = [
+  {
+    name: 'Coben Ventures',
+    invested: 50000,
+    currentValue: 50000,
+    multiple: 1.0,
+    status: 'Hold',
+  },
+  {
+    name: 'Enzo Ventures',
+    invested: 100000,
+    currentValue: 150000,
+    multiple: 1.5,
+    status: 'Hold',
+  },
 ];
+
+// Legacy exports for backward compat
+export const stocks = [];
+export const vcPe = privateEquity.map(p => ({
+  name: p.name,
+  invested: p.invested,
+  valuation: p.currentValue,
+  status: 'Activo',
+  vintage: 2024,
+}));
+export const vcPeFunds = vcStartups.map(v => ({
+  name: v.name,
+  committed: v.invested,
+  called: v.invested,
+  nav: v.currentValue,
+  dpi: 0,
+  tvpi: v.multiple,
+  vintage: 2024,
+}));
 
 // Computed totals
 export const loansSummary = {
-  totalCapital: 237880,
+  totalCapital: loans.reduce((s, l) => s + l.capital, 0),
   totalInterestEarned: loans.reduce((s, l) => s + l.interestEarned, 0),
   totalPending: loans.reduce((s, l) => s + l.capitalPending, 0),
   activeCount: loans.filter(l => l.status === 'Activo').length,
-  completedCount: loans.filter(l => l.status === 'Amortizado').length,
+  completedCount: loans.filter(l => l.status !== 'Activo').length,
   avgTir: (loans.reduce((s, l) => s + l.tir, 0) / loans.length).toFixed(1),
+};
+
+export const peSummary = {
+  totalInvested: privateEquity.reduce((s, p) => s + p.invested, 0),
+  totalCurrentValue: privateEquity.reduce((s, p) => s + p.currentValue, 0),
+  totalMultiple: 2.82,
+};
+
+export const vcSummary = {
+  totalInvested: vcStartups.reduce((s, v) => s + v.invested, 0),
+  totalCurrentValue: vcStartups.reduce((s, v) => s + v.currentValue, 0),
 };
