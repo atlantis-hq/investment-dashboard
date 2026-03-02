@@ -1,11 +1,19 @@
 // Portfolio data - from Asier's Google Sheets (real data)
 // Last updated: 2026-03-02
 
+// Annualized return: ((totalValue/totalInvested)^(1/years))-1
+// Portfolio inception ~Jan 2024, so ~2.17 years to Mar 2026
+const _inceptionDate = new Date(2024, 0, 1);
+const _years = (new Date() - _inceptionDate) / (365.25 * 24 * 60 * 60 * 1000);
+const _annualizedReturn = (Math.pow(1078524 / 1024334, 1 / _years) - 1) * 100;
+
 export const portfolioSummary = {
   totalValue: 1078524,
   totalInvested: 1024334,
   totalReturn: 54190,
   totalReturnPct: 5.29,
+  annualizedReturnPct: Math.round(_annualizedReturn * 100) / 100,
+  inceptionDate: '2024-01-01',
   lastUpdated: '2026-03-02',
 };
 

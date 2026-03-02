@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, ArrowRight, Wallet, Lock, Droplets, Calendar, BarChart3, AlertTriangle, Bell } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight, Wallet, Lock, Droplets, Calendar, BarChart3, AlertTriangle, Bell, Target } from 'lucide-react';
 import { usePortfolio } from '../hooks/usePortfolioData';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { useColors } from '../hooks/useColors';
@@ -132,9 +132,9 @@ export default function Overview({ setPage }) {
         </div>
 
         {[
+          { icon: Target, iconColor: c.green, label: 'Rent. Anual', value: (ps.annualizedReturnPct >= 0 ? '+' : '') + (ps.annualizedReturnPct || 0).toFixed(1) + '%', sub: 'Desde ' + (ps.inceptionDate ? new Date(ps.inceptionDate + 'T00:00:00').getFullYear() : '2024') + ' (CAGR)', valueColor: ps.annualizedReturnPct >= 0 ? c.green : c.red },
           { icon: Droplets, iconColor: c.cyan, label: 'Liquidez', value: fmt(liquidez), sub: 'RF + Oro + Crypto', valueColor: c.text },
           { icon: Lock, iconColor: c.amber, label: 'Ilíquido', value: pctIliquido + '%', sub: fmt(peInv + vcInv) + ' en PE + VC', valueColor: c.amber },
-          { icon: BarChart3, iconColor: c.purple, label: 'Income/mes', value: '~€' + parseInt(monthlyIncome).toLocaleString('es-ES'), sub: 'Intereses préstamos', valueColor: c.green },
         ].map((kpi) => (
           <div key={kpi.label} className="rounded-2xl p-5" style={{ background: c.card, border: `1px solid ${c.border}` }}>
             <div className="flex items-center gap-2 mb-3">
