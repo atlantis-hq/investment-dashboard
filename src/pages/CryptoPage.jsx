@@ -1,53 +1,44 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import KPI from '../components/KPI';
-import Card from '../components/Card';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { Bitcoin, TrendingUp } from 'lucide-react';
+import { useColors } from '../hooks/useColors';
 
-const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
-const colors = ['#f7931a', '#627eea', '#9945ff', '#375bd2', '#2775ca', '#e84142', '#26a17b', '#ff007a'];
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const columns = [
-  { key: 'name', label: 'Activo', render: (v, row) => (
-    <div><span className="font-medium text-white">{v}</span>{row.ticker && <span className="ml-2 text-xs text-[#64748b]">{row.ticker}</span>}</div>
-  )},
-  { key: 'amount', label: 'Cantidad', align: 'right', render: (v) => <span className="text-[#94a3b8]">{v ?? '—'}</span> },
-  { key: 'invested', label: 'Invertido', align: 'right', render: (v) => <span className="text-[#94a3b8]">{fmt(v)}</span> },
-  { key: 'current', label: 'Valor Actual', align: 'right', render: (v) => <span className="text-white font-medium">{fmt(v)}</span> },
-  { key: 'returnPct', label: 'Rentabilidad', align: 'right', render: (_, row) => {
-    const r = row.invested ? ((row.current - row.invested) / row.invested * 100).toFixed(1) : '0';
-    return <span className={r >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'}>{r >= 0 ? '+' : ''}{r}%</span>;
-  }},
-];
-
-export default function CryptoPage() {
+export default function CryptoPage({ setPage }) {
   const { crypto } = usePortfolio();
-  const totalInvested = crypto.reduce((s, c) => s + c.invested, 0);
-  const totalCurrent = crypto.reduce((s, c) => s + c.current, 0);
+  const c = useColors();
+  const btc = crypto[0];
+  const pnl = btc.current - btc.invested;
+  const pnlPct = ((pnl / btc.invested) * 100).toFixed(1);
+  const pnlColor = pnl > 0 ? c.green : pnl < 0 ? c.red : c.amber;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Criptomonedas</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KPI label="Valor Total" value={totalCurrent} icon={Bitcoin} />
-        <KPI label="Total Invertido" value={totalInvested} />
-        <KPI label="Beneficio" value={totalCurrent - totalInvested} change={totalInvested ? ((totalCurrent - totalInvested) / totalInvested * 100).toFixed(1) : 0} icon={TrendingUp} />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card title="Distribución Crypto" className="lg:col-span-1">
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie data={crypto} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="current" stroke="none">
-                {crypto.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
-              </Pie>
-              <Tooltip formatter={(v) => fmt(v)} contentStyle={{ background: '#1a2035', border: '1px solid #1e293b', borderRadius: 8, fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-        </Card>
-        <Card title="Detalle de Criptomonedas" className="lg:col-span-2">
-          <DataTable columns={columns} data={crypto} />
-        </Card>
+    <div className="space-y-8">
+      <PageHeader title="Criptomonedas" subtitle="Posiciones en cripto" icon="₿" setPage={setPage} />
+      <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: c.text }}>Bitcoin (BTC)</h3>
+            <p className="text-xs mt-1" style={{ color: c.textMuted }}>{btc.amount} BTC · Precio medio €{btc.avgPrice.toLocaleString('es-ES')}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold" style={{ color: pnlColor }}>{pnlPct}%</p>
+            <p className="text-[10px]" style={{ color: c.textMuted }}>P&L</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            { label: 'Invertido', value: fmt(btc.invested), color: c.text },
+            { label: 'Valor Actual', value: fmt(btc.current), color: c.text },
+            { label: 'P&L', value: fmt(pnl), color: pnlColor },
+            { label: 'Precio Actual', value: '€' + btc.currentPrice.toLocaleString('es-ES'), color: c.text },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>{f.label}</p>
+              <p className="text-lg font-semibold mt-1" style={{ color: f.color }}>{f.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

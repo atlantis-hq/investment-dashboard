@@ -1,41 +1,47 @@
-import KPI from '../components/KPI';
-import Card from '../components/Card';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { Landmark, TrendingDown } from 'lucide-react';
+import { useColors } from '../hooks/useColors';
 
 const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const columns = [
-  { key: 'name', label: 'Nombre', render: (v) => <span className="font-medium text-white">{v}</span> },
-  { key: 'type', label: 'Tipo', render: (v) => (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${v === 'Oro Físico' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-cyan-500/15 text-cyan-400'}`}>{v}</span>
-  )},
-  { key: 'invested', label: 'Coste', align: 'right', render: (v) => <span className="text-[#94a3b8]">{fmt(v)}</span> },
-  { key: 'current', label: 'Valor Actual', align: 'right', render: (v) => <span className="text-white font-medium">{fmt(v)}</span> },
-  { key: 'returnPct', label: 'Rentabilidad', align: 'right', render: (_, row) => {
-    const r = row.invested ? ((row.current - row.invested) / row.invested * 100).toFixed(2) : '0';
-    return <span className={r >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'}>{r >= 0 ? '+' : ''}{r}%</span>;
-  }},
-];
-
-export default function MonetaryPage() {
+export default function MonetaryPage({ setPage }) {
   const { monetaryFunds } = usePortfolio();
-  const totalInvested = monetaryFunds.reduce((s, f) => s + f.invested, 0);
-  const totalCurrent = monetaryFunds.reduce((s, f) => s + f.current, 0);
-  const pnl = totalCurrent - totalInvested;
+  const c = useColors();
+  const gold = monetaryFunds[0];
+  const pnl = gold.current - gold.invested;
+  const pnlPct = ((pnl / gold.invested) * 100).toFixed(1);
+  const pnlColor = pnl > 0 ? c.green : pnl < 0 ? c.red : c.amber;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Fondos Monetarios + Oro</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KPI label="Valor Total" value={totalCurrent} icon={Landmark} />
-        <KPI label="Coste Total" value={totalInvested} />
-        <KPI label="Ganancia/Pérdida" value={pnl} change={totalInvested ? ((pnl / totalInvested) * 100).toFixed(2) : 0} icon={TrendingDown} />
+    <div className="space-y-8">
+      <PageHeader title="Oro Físico" subtitle="Reserva en lingotes de oro" icon="🥇" setPage={setPage} />
+      <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: c.text }}>{gold.name}</h3>
+            <p className="text-xs mt-1" style={{ color: c.textMuted }}>{gold.units} × {gold.unitWeight} · {gold.status}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold" style={{ color: pnlColor }}>{pnlPct}%</p>
+            <p className="text-[10px]" style={{ color: c.textMuted }}>vs coste</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { label: 'Coste Total', value: fmt(gold.invested), color: c.text },
+            { label: 'Valor Actual', value: fmt(gold.current), color: c.text },
+            { label: 'P&L', value: fmt(pnl), color: pnlColor },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>{f.label}</p>
+              <p className="text-lg font-semibold mt-1" style={{ color: f.color }}>{f.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <Card title="Detalle de Activos Monetarios">
-        <DataTable columns={columns} data={monetaryFunds} />
-      </Card>
+      <div className="rounded-xl p-4 text-xs" style={{ background: `${c.cyan}15`, border: `1px solid ${c.cyan}33`, color: c.cyan }}>
+        💡 Precio referencia vía proxy GLD ETF (~8% bajo spot). El valor real puede ser ligeramente superior.
+      </div>
     </div>
   );
 }

@@ -1,14 +1,17 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useMemo, createContext, useContext } from 'react';
 import * as fallback from '../data/portfolio';
 
 const PortfolioContext = createContext(null);
 
 export function PortfolioProvider({ children }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading] = useState(false);
+  const [error] = useState(null);
   const [lastUpdated] = useState(new Date());
 
-  // Use static data directly (real data from Google Sheets baked into portfolio.js)
+  const cashflow = useMemo(() => fallback.computeCashflow(), []);
+  const evolution = useMemo(() => fallback.computeEvolution(), []);
+  const alerts = useMemo(() => fallback.computeAlerts(), []);
+
   const portfolio = {
     portfolioSummary: fallback.portfolioSummary,
     categoryAllocation: fallback.categoryAllocation,
@@ -22,7 +25,9 @@ export function PortfolioProvider({ children }) {
     peSummary: fallback.peSummary,
     vcStartups: fallback.vcStartups,
     vcSummary: fallback.vcSummary,
-    // Legacy
+    cashflow,
+    evolution,
+    alerts,
     stocks: fallback.stocks,
     vcPe: fallback.vcPe,
     vcPeFunds: fallback.vcPeFunds,

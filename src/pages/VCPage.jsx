@@ -1,42 +1,63 @@
-import KPI from '../components/KPI';
-import Card from '../components/Card';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { Rocket, TrendingUp, AlertTriangle } from 'lucide-react';
+import { useColors } from '../hooks/useColors';
 
-const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 });
 
-const columns = [
-  { key: 'name', label: 'Fondo', render: (v) => <span className="font-medium text-white">{v}</span> },
-  { key: 'invested', label: 'Capital Invertido', align: 'right', render: (v) => <span className="text-[#94a3b8]">{fmt(v)}</span> },
-  { key: 'currentValue', label: 'Valor Actual', align: 'right', render: (v) => <span className="text-white font-medium">{fmt(v)}</span> },
-  { key: 'multiple', label: 'Múltiplo', align: 'right', render: (v) => (
-    <span className={`font-bold ${v >= 1 ? 'text-[#10b981]' : 'text-[#ef4444]'}`}>{v}x</span>
-  )},
-  { key: 'status', label: 'Estado', render: (v) => <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400">{v}</span> },
-];
-
-export default function VCPage() {
+export default function VCPage({ setPage }) {
   const { vcStartups, vcSummary } = usePortfolio();
+  const c = useColors();
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">VC Startups</h2>
+    <div className="space-y-8">
+      <PageHeader title="VC Startups" subtitle="Fondos de venture capital" icon="🚀" setPage={setPage} />
 
-      <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-400 text-sm flex items-center gap-2">
-        <AlertTriangle size={16} />
-        Los múltiplos son no realizados. Solo el capital invertido cuenta en el total de cartera.
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          { label: 'Committed', value: fmt(vcSummary.totalInvested), color: c.text },
+          { label: 'NAV Ref.', value: fmt(vcSummary.totalCurrentValue), color: c.amber },
+        ].map((kpi) => (
+          <div key={kpi.label} className="rounded-2xl p-5" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+            <span className="text-xs uppercase tracking-wider" style={{ color: c.textSecondary }}>{kpi.label}</span>
+            <p className="text-xl font-bold mt-2" style={{ color: kpi.color }}>{kpi.value}</p>
+          </div>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KPI label="Capital Invertido" value={vcSummary.totalInvested} icon={Rocket} />
-        <KPI label="Valor No Realizado" value={vcSummary.totalCurrentValue} icon={TrendingUp} />
-        <KPI label="Ganancia No Realizada" value={vcSummary.totalCurrentValue - vcSummary.totalInvested} change={vcSummary.totalInvested ? (((vcSummary.totalCurrentValue - vcSummary.totalInvested) / vcSummary.totalInvested) * 100).toFixed(1) : 0} />
+      <div className="space-y-4">
+        {vcStartups.map((vc) => {
+          const mColor = vc.multiple >= 1.5 ? c.green : vc.multiple >= 1 ? c.amber : c.red;
+          return (
+            <div key={vc.name} className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold" style={{ color: c.text }}>{vc.name}</h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${c.amber}22`, color: c.amber }}>{vc.status}</span>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold" style={{ color: mColor }}>{vc.multiple}x</p>
+                  <p className="text-[10px]" style={{ color: c.textMuted }}>TVPI</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Committed', value: fmt(vc.invested) },
+                  { label: 'NAV', value: fmt(vc.currentValue) },
+                ].map((f) => (
+                  <div key={f.label}>
+                    <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>{f.label}</p>
+                    <p className="text-sm font-semibold mt-1" style={{ color: c.text }}>{f.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      <Card title="Fondos de Venture Capital" subtitle="Múltiplos como referencia — solo capital invertido en totales">
-        <DataTable columns={columns} data={vcStartups} />
-      </Card>
+      <div className="rounded-xl p-4 text-xs" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
+        💡 Solo capital committed en totales del portfolio. NAV es referencial hasta distribución.
+      </div>
     </div>
   );
 }

@@ -1,38 +1,41 @@
-import KPI from '../components/KPI';
-import Card from '../components/Card';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { Shield, TrendingUp } from 'lucide-react';
+import { useColors } from '../hooks/useColors';
 
 const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const columns = [
-  { key: 'name', label: 'Producto', render: (v) => <span className="font-medium text-white">{v}</span> },
-  { key: 'capital', label: 'Capital', align: 'right', render: (v) => <span className="text-[#94a3b8]">{fmt(v)}</span> },
-  { key: 'tae', label: 'TAE', align: 'right', render: (v) => <span className="text-[#10b981] font-medium">{v}%</span> },
-  { key: 'startDate', label: 'Fecha Inicio', render: (v) => <span className="text-[#94a3b8]">{v}</span> },
-  { key: 'interestAccrued', label: 'Interés Acumulado', align: 'right', render: (v) => <span className="text-[#10b981]">+{fmt(v)}</span> },
-  { key: 'currentValue', label: 'Valor Actual', align: 'right', render: (v) => <span className="text-white font-medium">{fmt(v)}</span> },
-  { key: 'status', label: 'Estado', render: (v) => <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/15 text-green-400">{v}</span> },
-];
-
-export default function RentaFijaPage() {
+export default function RentaFijaPage({ setPage }) {
   const { rentaFija } = usePortfolio();
-  const totalCapital = rentaFija.reduce((s, r) => s + r.capital, 0);
-  const totalValue = rentaFija.reduce((s, r) => s + r.currentValue, 0);
-  const totalInterest = rentaFija.reduce((s, r) => s + r.interestAccrued, 0);
+  const c = useColors();
+  const rf = rentaFija[0];
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">Renta Fija</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KPI label="Valor Total" value={totalValue} icon={Shield} />
-        <KPI label="Capital Invertido" value={totalCapital} />
-        <KPI label="Intereses Acumulados" value={totalInterest} change={totalCapital ? ((totalInterest / totalCapital) * 100).toFixed(2) : 0} icon={TrendingUp} />
+    <div className="space-y-8">
+      <PageHeader title="Renta Fija" subtitle="Cuentas remuneradas y depósitos" icon="🛡️" setPage={setPage} />
+      <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: c.text }}>{rf.name}</h3>
+            <p className="text-xs mt-1" style={{ color: c.textMuted }}>{rf.product} · Inicio {rf.startDate} · {rf.status}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold" style={{ color: c.green }}>{rf.tae}%</p>
+            <p className="text-[10px]" style={{ color: c.textMuted }}>TAE</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { label: 'Capital', value: fmt(rf.capital), color: c.text },
+            { label: 'Intereses', value: fmt(rf.interestAccrued), color: c.green },
+            { label: 'Valor Total', value: fmt(rf.currentValue), color: c.text },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>{f.label}</p>
+              <p className="text-lg font-semibold mt-1" style={{ color: f.color }}>{f.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <Card title="Detalle de Renta Fija">
-        <DataTable columns={columns} data={rentaFija} />
-      </Card>
     </div>
   );
 }

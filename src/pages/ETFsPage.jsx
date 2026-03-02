@@ -1,42 +1,42 @@
-import KPI from '../components/KPI';
-import Card from '../components/Card';
-import DataTable from '../components/DataTable';
+import PageHeader from '../components/PageHeader';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { TrendingUp, Wallet } from 'lucide-react';
+import { useColors } from '../hooks/useColors';
 
-const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES');
+const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const columns = [
-  { key: 'name', label: 'Nombre', render: (v, row) => (
-    <div><span className="font-medium text-white">{v}</span><span className="ml-2 text-xs text-[#64748b]">{row.ticker}</span></div>
-  )},
-  { key: 'type', label: 'Tipo', render: (v) => (
-    <span className={`text-xs px-2 py-0.5 rounded-full ${v === 'ETF' ? 'bg-blue-500/15 text-blue-400' : 'bg-purple-500/15 text-purple-400'}`}>{v}</span>
-  )},
-  { key: 'invested', label: 'Invertido', align: 'right', render: (v) => <span className="text-[#94a3b8]">{fmt(v)}</span> },
-  { key: 'current', label: 'Valor Actual', align: 'right', render: (v) => <span className="text-white font-medium">{fmt(v)}</span> },
-  { key: 'returnPct', label: 'Rentabilidad', align: 'right', render: (v) => {
-    const val = v || 0;
-    return <span className={val >= 0 ? 'text-[#10b981]' : 'text-[#ef4444]'}>{val >= 0 ? '+' : ''}{val}%</span>;
-  }},
-];
-
-export default function ETFsPage() {
+export default function ETFsPage({ setPage }) {
   const { etfsFunds } = usePortfolio();
-  const totalInvested = etfsFunds.reduce((s, f) => s + f.invested, 0);
-  const totalCurrent = etfsFunds.reduce((s, f) => s + f.current, 0);
+  const c = useColors();
+  const fund = etfsFunds[0];
+  const retColor = fund.returnPct > 0 ? c.green : fund.returnPct < 0 ? c.red : c.amber;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">ETFs + Fondos Indexados</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <KPI label="Valor Total" value={totalCurrent} icon={Wallet} />
-        <KPI label="Total Invertido" value={totalInvested} />
-        <KPI label="Beneficio" value={totalCurrent - totalInvested} change={totalInvested ? ((totalCurrent - totalInvested) / totalInvested * 100).toFixed(1) : 0} icon={TrendingUp} />
+    <div className="space-y-8">
+      <PageHeader title="ETFs + Fondos" subtitle="Fondos de inversión" icon="📈" setPage={setPage} />
+      <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
+        <div className="flex items-start justify-between mb-6">
+          <div>
+            <h3 className="text-lg font-bold" style={{ color: c.text }}>{fund.name}</h3>
+            <p className="text-xs mt-1" style={{ color: c.textMuted }}>{fund.type} · {fund.status} · Entrada {fund.dateEntry}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold" style={{ color: retColor }}>+{fund.returnPct}%</p>
+            <p className="text-[10px]" style={{ color: c.textMuted }}>rentabilidad</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {[
+            { label: 'Invertido', value: fmt(fund.invested), color: c.text },
+            { label: 'Valor Actual', value: fmt(fund.current), color: c.green },
+            { label: 'Beneficio', value: fmt(fund.current - fund.invested), color: c.green },
+          ].map((f) => (
+            <div key={f.label}>
+              <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>{f.label}</p>
+              <p className="text-lg font-semibold mt-1" style={{ color: f.color }}>{f.value}</p>
+            </div>
+          ))}
+        </div>
       </div>
-      <Card title="Detalle de Fondos y ETFs">
-        <DataTable columns={columns} data={etfsFunds} />
-      </Card>
     </div>
   );
 }
