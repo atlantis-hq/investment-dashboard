@@ -21,31 +21,8 @@ const SECURITY_HEADERS = {
 };
 
 export default function middleware(request) {
-  const auth = request.headers.get('authorization');
-
-  if (auth) {
-    const [scheme, encoded] = auth.split(' ');
-    if (scheme === 'Basic') {
-      const decoded = atob(encoded);
-      const [user, pass] = decoded.split(':');
-      if (USERS[user] && USERS[user] === pass) {
-        // Authenticated — add security headers
-        const response = new Response(null, { status: 200 });
-        // We can't modify the actual response in edge middleware this way,
-        // so we use next() pattern — return undefined to pass through
-        // Security headers are added via vercel.json instead
-        return undefined;
-      }
-    }
-  }
-
-  return new Response('Authentication required', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Bentor Capital Dashboard"',
-      ...SECURITY_HEADERS,
-    },
-  });
+  // Auth temporarily disabled — public access
+  return undefined;
 }
 
 export const config = {
