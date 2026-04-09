@@ -1,27 +1,27 @@
 // Portfolio data - from Asier's Google Sheets (real data)
-// Last updated: 2026-03-02
+// Last updated: 2026-04-07
 
 // Annualized return: ((totalValue/totalInvested)^(1/years))-1
-// Portfolio inception ~Jan 2024, so ~2.17 years to Mar 2026
+// Portfolio inception ~Jan 2024, so ~2.25 years to Apr 2026
 const _inceptionDate = new Date(2024, 0, 1);
 const _years = (new Date() - _inceptionDate) / (365.25 * 24 * 60 * 60 * 1000);
-const _annualizedReturn = (Math.pow(1078524 / 1024334, 1 / _years) - 1) * 100;
+const _annualizedReturn = (Math.pow(1074534 / 1024334, 1 / _years) - 1) * 100;
 
 export const portfolioSummary = {
-  totalValue: 1078524,
+  totalValue: 1074534,
   totalInvested: 1024334,
-  totalReturn: 54190,
-  totalReturnPct: 5.29,
+  totalReturn: 50200,
+  totalReturnPct: 4.90,
   annualizedReturnPct: Math.round(_annualizedReturn * 100) / 100,
   inceptionDate: '2024-01-01',
-  lastUpdated: '2026-03-02',
+  lastUpdated: '2026-04-07',
 };
 
 export const categoryAllocation = [
-  { name: 'ETFs + Fondos', value: 175957, color: '#3b82f6', invested: 128454, return: 36.98 },
-  { name: 'Fondos Monetarios', value: 71260, color: '#06b6d4', invested: 70000, return: 1.80 },
-  { name: 'Criptomonedas', value: 56690, color: '#f59e0b', invested: 78000, return: -27.32 },
-  { name: 'Renta Fija', value: 70174, color: '#10b981', invested: 70000, return: 0.25 },
+  { name: 'ETFs + Fondos', value: 175782, color: '#3b82f6', invested: 128454, return: 36.84 },
+  { name: 'Fondos Monetarios', value: 64361, color: '#06b6d4', invested: 70000, return: -8.06 },
+  { name: 'Criptomonedas', value: 59617, color: '#f59e0b', invested: 78000, return: -23.57 },
+  { name: 'Renta Fija', value: 70331, color: '#10b981', invested: 70000, return: 0.47 },
   { name: 'Préstamos', value: 264443, color: '#8b5cf6', invested: 237880, return: 11.17 },
   { name: 'PE', value: 290000, color: '#ec4899', invested: 290000, return: 0 },
   { name: 'VC Startups', value: 150000, color: '#f43f5e', invested: 150000, return: 0 },
@@ -32,8 +32,8 @@ export const etfsFunds = [
     name: 'Gestivalue Cap (Andbank)',
     ticker: 'Gestivalue Cap',
     invested: 128454.36,
-    current: 175956.77,
-    returnPct: 36.98,
+    current: 175781.91,
+    returnPct: 36.84,
     shares: 1,
     type: 'Fondo',
     status: 'Activo',
@@ -43,15 +43,15 @@ export const etfsFunds = [
 
 export const monetaryFunds = [
   {
-    name: 'Oro Físico (100g x5)',
+    name: 'Oro Físico (100g)',
     ticker: 'XAUEUR',
     invested: 70000,
-    current: 71259.54,
-    rate: null,
-    type: 'Oro Físico',
-    status: 'Hold',
+    current: 64360.92,
+    returnPct: -8.06,
     units: 5,
-    unitWeight: '100g',
+    pricePerUnit: 14000,
+    currentPricePerUnit: 12872.18,
+    status: 'Hold',
   },
 ];
 
@@ -61,9 +61,9 @@ export const crypto = [
     ticker: 'BTC',
     amount: 1.04,
     avgPrice: 75000,
-    currentPrice: 54509.68,
+    currentPrice: 59616.74,
     invested: 78000,
-    current: 56690.07,
+    current: 59616.74,
   },
 ];
 
@@ -74,35 +74,35 @@ export const rentaFija = [
     capital: 70000,
     tae: 2.27,
     startDate: '20/01/2026',
-    months: 1,
-    interestAccrued: 174.14,
-    currentValue: 70174.14,
+    months: 2,
+    interestAccrued: 330.86,
+    currentValue: 70330.86,
     status: 'Activo',
   },
 ];
 
 export const loans = [
-  { id: 1, platform: 'Habitalia', project: 'Habitalia #1', capital: 8894, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 9, capitalCobrado: 5169.59, interesTotal: 1106.12, capitalPending: 3724.41, interestEarned: 917.44 },
-  { id: 2, platform: 'Habitalia', project: 'Habitalia #2', capital: 8984, interestRate: 13.0, tir: 13.0, term: 23, startDate: '20/01/2025', endDate: '20/12/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 10, capitalCobrado: 4803.21, interesTotal: 1214.02, capitalPending: 4180.79, interestEarned: 960.89 },
-  { id: 3, platform: 'Habitalia', project: 'Habitalia #3', capital: 7282.50, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/11/2024', endDate: '20/04/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 2, capitalCobrado: 6353.06, interesTotal: 749.70, capitalPending: 929.44, interestEarned: 734.18 },
-  { id: 4, platform: 'Habitalia', project: 'Habitalia #4', capital: 7765, interestRate: 13.0, tir: 13.0, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 9, capitalCobrado: 4495.58, interesTotal: 1049.24, capitalPending: 3269.42, interestEarned: 869.61 },
-  { id: 5, platform: 'Habitalia', project: 'Habitalia #5', capital: 12694, interestRate: 12.5, tir: 12.5, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 9, capitalCobrado: 7363.77, interesTotal: 1646.96, capitalPending: 5330.23, interestEarned: 1365.51 },
-  { id: 6, platform: 'Habitalia', project: 'Habitalia #6', capital: 7131, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/12/2024', endDate: '20/05/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 3, capitalCobrado: 5773.32, interesTotal: 734.10, capitalPending: 1357.68, interestEarned: 703.82 },
-  { id: 7, platform: 'Habitalia', project: 'Habitalia #7', capital: 4750, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 4, capitalCobrado: 3550.80, interesTotal: 488.94, capitalPending: 1199.20, interestEarned: 455.44 },
-  { id: 8, platform: 'Habitalia', project: 'Habitalia #8', capital: 6834, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 11, capitalCobrado: 3370.32, interesTotal: 849.97, capitalPending: 3463.68, interestEarned: 638.71 },
-  { id: 9, platform: 'Habitalia', project: 'Habitalia #9', capital: 5673, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 4, capitalCobrado: 4240.77, interesTotal: 584.01, capitalPending: 1432.23, interestEarned: 544.00 },
-  { id: 10, platform: 'Habitalia', project: 'Habitalia #10', capital: 10857, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 11, capitalCobrado: 5354.34, interesTotal: 1350.33, capitalPending: 5502.66, interestEarned: 1014.70 },
-  { id: 11, platform: 'Habitalia', project: 'Habitalia #11', capital: 7844, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 12, capitalCobrado: 3528.12, interesTotal: 975.59, capitalPending: 4315.88, interestEarned: 689.94 },
-  { id: 12, platform: 'Habitalia', project: 'Habitalia #12', capital: 7347, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 12, capitalCobrado: 3304.58, interesTotal: 913.78, capitalPending: 4042.42, interestEarned: 646.23 },
-  { id: 13, platform: 'Habitalia', project: 'Habitalia #13', capital: 15103, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 12, capitalCobrado: 6793.12, interesTotal: 1878.43, capitalPending: 8309.88, interestEarned: 1328.43 },
-  { id: 14, platform: 'Habitalia', project: 'Habitalia #14', capital: 7672, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/03/2025', endDate: '20/08/2026', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 6, capitalCobrado: 4798.27, interesTotal: 789.79, capitalPending: 2873.73, interestEarned: 677.01 },
-  { id: 15, platform: 'Habitalia', project: 'Habitalia #15', capital: 10959.50, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 13, capitalCobrado: 4458.67, interesTotal: 1363.08, capitalPending: 6500.83, interestEarned: 898.97 },
-  { id: 16, platform: 'Habitalia', project: 'Habitalia #16', capital: 9925, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 13, capitalCobrado: 4037.81, interesTotal: 1234.42, capitalPending: 5887.19, interestEarned: 814.11 },
-  { id: 17, platform: 'Habitalia', project: 'Habitalia #17', capital: 9213, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 9, cuotasRestantes: 14, capitalCobrado: 3356.32, interesTotal: 1145.86, capitalPending: 5856.68, interestEarned: 697.14 },
-  { id: 18, platform: 'Habitalia', project: 'Habitalia #18', capital: 11353, interestRate: 10.0, tir: 10.0, term: 23, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 6, cuotasRestantes: 17, capitalCobrado: 2756.04, interesTotal: 1169.82, capitalPending: 8596.96, interestEarned: 510.79 },
-  { id: 19, platform: 'Habitalia', project: 'Habitalia #19', capital: 13599, interestRate: 10.0, tir: 10.0, term: 23, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 6, cuotasRestantes: 17, capitalCobrado: 3301.27, interesTotal: 1401.26, capitalPending: 10297.73, interestEarned: 611.84 },
-  { id: 20, platform: 'Habitalia', project: 'Habitalia #20', capital: 19000, interestRate: 9.0, tir: 9.0, term: 23, startDate: '20/11/2025', endDate: '20/10/2027', status: 'Activo', cuotasPagadas: 3, cuotasRestantes: 20, capitalCobrado: 2297.05, interesTotal: 1756.83, capitalPending: 16702.95, interestEarned: 410.36 },
-  { id: 21, platform: 'Habitalia', project: 'Habitalia #21', capital: 45000, interestRate: 9.0, tir: 9.0, term: 23, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 9, cuotasRestantes: 14, capitalCobrado: 16693.96, interesTotal: 4160.90, capitalPending: 28306.04, interestEarned: 2542.92 },
+  { id: 1, platform: 'Habitalia', project: 'Habitalia #1', capital: 8894, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 8, capitalCobrado: 5567.14, interesTotal: 1106.12, capitalPending: 3326.86, interestEarned: 954.68 },
+  { id: 2, platform: 'Habitalia', project: 'Habitalia #2', capital: 8984, interestRate: 13.0, tir: 13.0, term: 23, startDate: '20/01/2025', endDate: '20/12/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 9, capitalCobrado: 5201.31, interesTotal: 1214.02, capitalPending: 3782.69, interestEarned: 1006.18 },
+  { id: 3, platform: 'Habitalia', project: 'Habitalia #3', capital: 7282.5, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/11/2024', endDate: '20/04/2026', status: 'Activo', cuotasPagadas: 16, cuotasRestantes: 1, capitalCobrado: 6815.21, interesTotal: 749.70, capitalPending: 467.29, interestEarned: 744.50 },
+  { id: 4, platform: 'Habitalia', project: 'Habitalia #4', capital: 7765, interestRate: 13.0, tir: 13.0, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 8, capitalCobrado: 4843.39, interesTotal: 1049.24, capitalPending: 2921.61, interestEarned: 905.03 },
+  { id: 5, platform: 'Habitalia', project: 'Habitalia #5', capital: 12694, interestRate: 12.5, tir: 12.5, term: 23, startDate: '20/12/2024', endDate: '20/11/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 8, capitalCobrado: 7931.77, interesTotal: 1646.96, capitalPending: 4762.23, interestEarned: 1421.03 },
+  { id: 6, platform: 'Habitalia', project: 'Habitalia #6', capital: 7131, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/12/2024', endDate: '20/05/2026', status: 'Activo', cuotasPagadas: 15, cuotasRestantes: 2, capitalCobrado: 6220.89, interesTotal: 734.10, capitalPending: 910.11, interestEarned: 718.90 },
+  { id: 7, platform: 'Habitalia', project: 'Habitalia #7', capital: 4750, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 3, capitalCobrado: 3845.65, interesTotal: 488.94, capitalPending: 904.35, interestEarned: 468.77 },
+  { id: 8, platform: 'Habitalia', project: 'Habitalia #8', capital: 6834, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 10, capitalCobrado: 3669.77, interesTotal: 849.97, capitalPending: 3164.23, interestEarned: 673.34 },
+  { id: 9, platform: 'Habitalia', project: 'Habitalia #9', capital: 5673, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/01/2025', endDate: '20/06/2026', status: 'Activo', cuotasPagadas: 14, cuotasRestantes: 3, capitalCobrado: 4592.91, interesTotal: 584.01, capitalPending: 1080.09, interestEarned: 559.92 },
+  { id: 10, platform: 'Habitalia', project: 'Habitalia #10', capital: 10857, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/02/2025', endDate: '20/01/2027', status: 'Activo', cuotasPagadas: 13, cuotasRestantes: 10, capitalCobrado: 5830.07, interesTotal: 1350.33, capitalPending: 5026.93, interestEarned: 1069.73 },
+  { id: 11, platform: 'Habitalia', project: 'Habitalia #11', capital: 7844, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 11, capitalCobrado: 3868.42, interesTotal: 975.59, capitalPending: 3975.58, interestEarned: 733.10 },
+  { id: 12, platform: 'Habitalia', project: 'Habitalia #12', capital: 7347, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 11, capitalCobrado: 3623.32, interesTotal: 913.78, capitalPending: 3723.68, interestEarned: 686.65 },
+  { id: 13, platform: 'Habitalia', project: 'Habitalia #13', capital: 15103, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/03/2025', endDate: '20/02/2027', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 11, capitalCobrado: 7448.34, interesTotal: 1878.43, capitalPending: 7654.66, interestEarned: 1411.53 },
+  { id: 14, platform: 'Habitalia', project: 'Habitalia #14', capital: 7672, interestRate: 13.33, tir: 13.33, term: 17, startDate: '20/03/2025', endDate: '20/08/2026', status: 'Activo', cuotasPagadas: 12, cuotasRestantes: 5, capitalCobrado: 5264.09, interesTotal: 789.79, capitalPending: 2407.91, interestEarned: 708.94 },
+  { id: 15, platform: 'Habitalia', project: 'Habitalia #15', capital: 10959.5, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 12, capitalCobrado: 4929.43, interesTotal: 1363.08, capitalPending: 6030.07, interestEarned: 963.98 },
+  { id: 16, platform: 'Habitalia', project: 'Habitalia #16', capital: 9925, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/04/2025', endDate: '20/03/2027', status: 'Activo', cuotasPagadas: 11, cuotasRestantes: 12, capitalCobrado: 4464.13, interesTotal: 1234.42, capitalPending: 5460.87, interestEarned: 872.98 },
+  { id: 17, platform: 'Habitalia', project: 'Habitalia #17', capital: 9213, interestRate: 12.0, tir: 12.0, term: 23, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 13, capitalCobrado: 3748.14, interesTotal: 1145.86, capitalPending: 5464.86, interestEarned: 755.71 },
+  { id: 18, platform: 'Habitalia', project: 'Habitalia #18', capital: 11353, interestRate: 10.0, tir: 10.0, term: 23, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 7, cuotasRestantes: 16, capitalCobrado: 3228.86, interesTotal: 1169.82, capitalPending: 8124.14, interestEarned: 582.43 },
+  { id: 19, platform: 'Habitalia', project: 'Habitalia #19', capital: 13599, interestRate: 10.0, tir: 10.0, term: 23, startDate: '20/08/2025', endDate: '20/07/2027', status: 'Activo', cuotasPagadas: 7, cuotasRestantes: 16, capitalCobrado: 3867.64, interesTotal: 1401.26, capitalPending: 9731.36, interestEarned: 697.65 },
+  { id: 20, platform: 'Habitalia', project: 'Habitalia #20', capital: 19000, interestRate: 9.0, tir: 9.0, term: 23, startDate: '20/11/2025', endDate: '20/10/2027', status: 'Activo', cuotasPagadas: 4, cuotasRestantes: 19, capitalCobrado: 3074.25, interesTotal: 1756.83, capitalPending: 15925.75, interestEarned: 535.63 },
+  { id: 21, platform: 'Habitalia', project: 'Habitalia #21', capital: 45000, interestRate: 9.0, tir: 9.0, term: 23, startDate: '20/05/2025', endDate: '20/04/2027', status: 'Activo', cuotasPagadas: 10, cuotasRestantes: 13, capitalCobrado: 18619.09, interesTotal: 4160.90, capitalPending: 26380.91, interestEarned: 2755.21 },
 ];
 
 export const privateEquity = [
@@ -167,6 +167,7 @@ export const vcPeFunds = vcStartups.map(v => ({
   tvpi: v.multiple,
   vintage: 2024,
 }));
+
 
 // Computed totals
 export const loansSummary = {
@@ -241,8 +242,6 @@ export function computeEvolution() {
     const [d, m, y] = l.startDate.split('/');
     events.push({ date: new Date(y, m - 1, d), amount: l.capital, type: 'loan' });
   });
-  // Monetary (gold)
-  events.push({ date: new Date(2024, 0, 1), amount: monetaryFunds[0]?.invested || 0, type: 'gold' });
   // Crypto
   events.push({ date: new Date(2024, 5, 1), amount: crypto[0]?.invested || 0, type: 'crypto' });
   // Renta fija
