@@ -3,6 +3,7 @@ import { useTheme } from './useTheme';
 const palette = {
   dark: {
     bg: '#0a0e17',
+    bgSec: '#111827',
     card: '#1a2035',
     cardHover: '#1e2642',
     border: '#1e293b',
@@ -37,6 +38,7 @@ const palette = {
   },
   light: {
     bg: '#f8fafc',
+    bgSec: '#ffffff',
     card: '#ffffff',
     cardHover: '#f1f5f9',
     border: '#e2e8f0',

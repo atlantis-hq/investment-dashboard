@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import Sidebar from './components/Sidebar';
+import BottomNav from './components/BottomNav';
 import Overview from './pages/Overview';
+import OverviewMobile from './pages/OverviewMobile';
+import LoansPage from './pages/LoansPage';
+import LoansMobile from './pages/LoansMobile';
 import ETFsPage from './pages/ETFsPage';
 import MonetaryPage from './pages/MonetaryPage';
 import CryptoPage from './pages/CryptoPage';
 import RentaFijaPage from './pages/RentaFijaPage';
-import LoansPage from './pages/LoansPage';
 import PEPage from './pages/PEPage';
 import VCPage from './pages/VCPage';
 import { PortfolioProvider } from './hooks/usePortfolioData';
 import { ThemeProvider } from './hooks/useTheme';
 import { useColors } from './hooks/useColors';
+import { useIsMobile } from './hooks/useMediaQuery';
 
-const pages = {
+const desktopPages = {
   overview: Overview,
   etfs: ETFsPage,
   monetary: MonetaryPage,
@@ -23,26 +27,73 @@ const pages = {
   vc: VCPage,
 };
 
+const mobilePages = {
+  overview: OverviewMobile,
+  loans: LoansMobile,
+  // Categorías que conservan la versión desktop sobre mobile (responsive shrink)
+  etfs: ETFsPage,
+  monetary: MonetaryPage,
+  crypto: CryptoPage,
+  rentafija: RentaFijaPage,
+  pe: PEPage,
+  vc: VCPage,
+};
+
 function AppInner() {
   const [page, setPage] = useState('overview');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const c = useColors();
-  const Page = pages[page];
+  const isMobile = useIsMobile();
+
+  const Page = (isMobile ? mobilePages : desktopPages)[page] || desktopPages.overview;
 
   return (
     <div className="flex h-screen" style={{ background: c.bg }}>
-      <Sidebar page={page} setPage={(p) => { setPage(p); setSidebarOpen(false); }} open={sidebarOpen} setOpen={setSidebarOpen} />
+      {/* Desktop sidebar — hidden on mobile (replaced by bottom nav) */}
+      {!isMobile && (
+        <Sidebar
+          page={page}
+          setPage={(p) => {
+            setPage(p);
+            setSidebarOpen(false);
+          }}
+          open={sidebarOpen}
+          setOpen={setSidebarOpen}
+        />
+      )}
+
+      {/* Mobile sidebar acts as the "Más" sheet */}
+      {isMobile && sidebarOpen && (
+        <Sidebar
+          page={page}
+          setPage={(p) => {
+            setPage(p);
+            setSidebarOpen(false);
+          }}
+          open={sidebarOpen}
+          setOpen={setSidebarOpen}
+        />
+      )}
+
       <main className="flex-1 overflow-auto">
-        <div className="md:hidden flex items-center p-4" style={{ borderBottom: `1px solid ${c.border}` }}>
-          <button onClick={() => setSidebarOpen(true)} style={{ color: c.gold }} className="hover:opacity-80 transition-opacity">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-          </button>
-          <h1 className="ml-4 text-lg font-bold" style={{ color: c.gold }}>Portfolio</h1>
-        </div>
-        <div className="p-4 md:p-8 max-w-[1400px] mx-auto">
-          <Page setPage={(p) => { setPage(p); }} />
+        <div
+          className="mx-auto"
+          style={{
+            maxWidth: 1400,
+            padding: isMobile ? '0 16px 88px' : '32px',
+          }}
+        >
+          <Page setPage={setPage} />
         </div>
       </main>
+
+      {isMobile && (
+        <BottomNav
+          page={page}
+          setPage={setPage}
+          openMenu={() => setSidebarOpen(true)}
+        />
+      )}
     </div>
   );
 }
