@@ -6,381 +6,73 @@ import {
   Wallet,
   TrendingUp,
   Percent,
+  Activity,
+  MapPin,
   ChevronDown,
-  ChevronUp,
-  Banknote,
 } from 'lucide-react';
 import { usePortfolio } from '../hooks/usePortfolioData';
 import { useColors } from '../hooks/useColors';
 import Card from '../components/Card';
 import KPI from '../components/KPI';
 import Badge from '../components/Badge';
-import ProgressBar from '../components/ProgressBar';
+
+const TEAL = '#14b8a6';
+const TEAL_BG = 'rgba(20,184,166,0.12)';
+const TEAL_BORDER = 'rgba(20,184,166,0.3)';
 
 const fmt = (v) => '€' + Math.round(v || 0).toLocaleString('es-ES');
-const fmtDec = (v) =>
-  '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const pct = (v, d = 2) => (v >= 0 ? '+' : '') + (v || 0).toFixed(d) + '%';
+const fmtPct = (v, d = 2) => (v >= 0 ? '+' : '') + (v || 0).toFixed(d) + '%';
 
-function PropertyRow({ property, c, computeMetrics }) {
-  const [expanded, setExpanded] = useState(false);
-  const m = computeMetrics(property);
-  const f = property.financing;
-  const isIndustrial = property.type === 'Industrial';
-  const Ic = isIndustrial ? Building : Home;
-
-  const principalPaid = 0; // mostrable como progreso de amortización (aprox simple)
-  const loanProgress =
-    f.loanAmount > 0
-      ? Math.min((principalPaid / f.loanAmount) * 100, 100)
-      : 100;
-
+function BigNum({ label, value, color }) {
+  const c = useColors();
   return (
-    <div
-      style={{
-        background: c.card,
-        border: `1px solid ${c.border}`,
-        borderRadius: 14,
-        padding: 0,
-        overflow: 'hidden',
-        transition: 'all .15s ease',
-      }}
-    >
-      {/* Header row */}
-      <button
-        onClick={() => setExpanded(!expanded)}
+    <div>
+      <p
         style={{
-          width: '100%',
-          background: 'transparent',
-          border: 'none',
-          padding: '16px 20px',
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          textAlign: 'left',
-          display: 'grid',
-          gridTemplateColumns: '52px 1.6fr 1fr 1fr 1fr 120px 22px',
-          gap: 16,
-          alignItems: 'center',
+          fontSize: 10,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: c.textSecondary,
+          fontWeight: 500,
         }}
-        className="re-row"
       >
-        <div
-          style={{
-            width: 44,
-            height: 44,
-            borderRadius: 12,
-            background: '#14b8a622',
-            color: '#14b8a6',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Ic size={20} />
-        </div>
-
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: c.text }}>
-              {property.name}
-            </span>
-            <Badge color={'#14b8a6'} bg={'#14b8a622'} border={'#14b8a655'}>
-              {property.type}
-            </Badge>
-          </div>
-          <p style={{ fontSize: 11, color: c.textMuted, marginTop: 3 }}>
-            {property.city} · comprado {property.purchaseDate}
-          </p>
-        </div>
-
-        <div>
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: c.textSecondary,
-            }}
-          >
-            Precio compra
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: c.text,
-              marginTop: 2,
-              fontVariantNumeric: 'tabular-nums',
-              fontWeight: 500,
-            }}
-          >
-            {fmt(property.purchasePrice)}
-          </p>
-        </div>
-
-        <div>
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: c.textSecondary,
-            }}
-          >
-            Alquiler/mes
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: c.green,
-              marginTop: 2,
-              fontVariantNumeric: 'tabular-nums',
-              fontWeight: 600,
-            }}
-          >
-            {fmt(property.monthlyRent)}
-          </p>
-        </div>
-
-        <div>
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: c.textSecondary,
-            }}
-          >
-            Cash-on-cash
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: m.cashOnCash >= 0 ? c.green : c.red,
-              marginTop: 2,
-              fontVariantNumeric: 'tabular-nums',
-              fontWeight: 600,
-            }}
-          >
-            {pct(m.cashOnCash)}
-          </p>
-        </div>
-
-        <div style={{ textAlign: 'right' }}>
-          <p
-            style={{
-              fontSize: 10,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: c.textSecondary,
-            }}
-          >
-            Cashflow/mes
-          </p>
-          <p
-            style={{
-              fontSize: 13,
-              color: m.monthlyCashflow >= 0 ? c.green : c.red,
-              marginTop: 2,
-              fontVariantNumeric: 'tabular-nums',
-              fontWeight: 600,
-            }}
-          >
-            {(m.monthlyCashflow >= 0 ? '+' : '') + fmt(m.monthlyCashflow)}
-          </p>
-        </div>
-
-        <div style={{ color: c.textMuted, display: 'flex', justifyContent: 'center' }}>
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
-      </button>
-
-      {/* Expanded detail */}
-      {expanded && (
-        <div
-          style={{
-            borderTop: `1px solid ${c.border}`,
-            background: c.bg,
-            padding: '20px 20px 24px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 20,
-          }}
-          className="re-detail"
-        >
-          {/* Adquisición */}
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.gold,
-                fontWeight: 500,
-                marginBottom: 10,
-              }}
-            >
-              Adquisición
-            </p>
-            <Line label="Precio" value={fmt(property.purchasePrice)} c={c} />
-            <Line label="Gastos" value={fmt(property.acquisitionCosts)} c={c} />
-            <Line
-              label="Total"
-              value={fmt(property.purchasePrice + property.acquisitionCosts)}
-              c={c}
-              bold
-            />
-            <Line
-              label="Valor actual"
-              value={fmt(property.currentValue)}
-              c={c}
-              color={m.appreciation >= 0 ? c.green : c.red}
-            />
-            <Line
-              label="Revalorización"
-              value={pct(m.appreciationPct)}
-              c={c}
-              color={m.appreciation >= 0 ? c.green : c.red}
-            />
-          </div>
-
-          {/* Financiación */}
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.gold,
-                fontWeight: 500,
-                marginBottom: 10,
-              }}
-            >
-              Financiación
-            </p>
-            {f.type === 'mortgage' ? (
-              <>
-                <Line label="Capital aportado" value={fmt(f.equity)} c={c} />
-                <Line label="Hipoteca" value={fmt(f.loanAmount)} c={c} />
-                <Line label="TIN" value={f.rate.toFixed(2) + '%'} c={c} />
-                <Line
-                  label="Plazo"
-                  value={Math.round(f.termMonths / 12) + ' años'}
-                  c={c}
-                />
-                <Line
-                  label="Cuota/mes"
-                  value={fmtDec(f.monthlyPayment)}
-                  c={c}
-                  bold
-                />
-              </>
-            ) : (
-              <>
-                <Line label="Modalidad" value="Contado" c={c} bold />
-                <Line label="Capital aportado" value={fmt(f.equity)} c={c} />
-              </>
-            )}
-          </div>
-
-          {/* Ingresos / costes */}
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.gold,
-                fontWeight: 500,
-                marginBottom: 10,
-              }}
-            >
-              Ingresos / Gastos
-            </p>
-            <Line
-              label="Renta bruta"
-              value={fmt(property.monthlyRent)}
-              c={c}
-              color={c.green}
-            />
-            <Line
-              label="Vacancia"
-              value={'-' + (property.vacancyRate * 100).toFixed(1) + '%'}
-              c={c}
-              color={c.textMuted}
-            />
-            <Line label="Comunidad" value={fmt(property.monthlyCosts.community)} c={c} />
-            <Line label="IBI (mes)" value={fmtDec(property.monthlyCosts.ibi)} c={c} />
-            <Line
-              label="Seguro (mes)"
-              value={fmtDec(property.monthlyCosts.insurance)}
-              c={c}
-            />
-            <Line
-              label="Mantenimiento"
-              value={fmt(property.monthlyCosts.maintenance)}
-              c={c}
-            />
-          </div>
-
-          {/* Rentabilidad */}
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.gold,
-                fontWeight: 500,
-                marginBottom: 10,
-              }}
-            >
-              Rentabilidad
-            </p>
-            <Line label="Yield bruto" value={pct(m.grossYield)} c={c} />
-            <Line label="Yield neto" value={pct(m.netYield)} c={c} />
-            <Line
-              label="Cashflow/mes"
-              value={(m.monthlyCashflow >= 0 ? '+' : '') + fmt(m.monthlyCashflow)}
-              c={c}
-              color={m.monthlyCashflow >= 0 ? c.green : c.red}
-            />
-            <Line
-              label="Cashflow/año"
-              value={(m.annualCashflow >= 0 ? '+' : '') + fmt(m.annualCashflow)}
-              c={c}
-              color={m.annualCashflow >= 0 ? c.green : c.red}
-            />
-            <Line
-              label="Cash-on-cash"
-              value={pct(m.cashOnCash)}
-              c={c}
-              color={m.cashOnCash >= 0 ? c.green : c.red}
-              bold
-            />
-          </div>
-        </div>
-      )}
+        {label}
+      </p>
+      <p
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: color || c.text,
+          marginTop: 4,
+          fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '-0.01em',
+        }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
 
-function Line({ label, value, c, color, bold }) {
+function DetailRow({ label, value, color, bold }) {
+  const c = useColors();
   return (
     <div
       style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'baseline',
-        padding: '6px 0',
-        fontSize: 12,
+        gap: 10,
       }}
     >
-      <span style={{ color: c.textSecondary }}>{label}</span>
+      <span style={{ fontSize: 12, color: c.textMuted }}>{label}</span>
       <span
         style={{
-          color: color || c.text,
+          fontSize: 13,
           fontWeight: bold ? 700 : 500,
+          color: color || c.text,
           fontVariantNumeric: 'tabular-nums',
+          textAlign: 'right',
         }}
       >
         {value}
@@ -389,11 +81,381 @@ function Line({ label, value, c, color, bold }) {
   );
 }
 
-export default function RealEstatePage({ setPage }) {
-  const { realEstate, realEstateSummary: rs, computeRealEstateMetrics } = usePortfolio();
+function PropertyCard({ prop }) {
   const c = useColors();
+  const [open, setOpen] = useState(false);
+  const calc = prop.calc;
+  const isResid = prop.type === 'Residencial';
+  const Ic = isResid ? Home : Building;
 
-  const teal = '#14b8a6';
+  // Distribution bar: opex (amber) + mortgage (red) + net (green) = 100% of gross rent
+  const barTotal = Math.max(calc.incomeMonth, 1);
+  const opexPct = (calc.opexMonth / barTotal) * 100;
+  const mortPct = (calc.mortgageMonth / barTotal) * 100;
+  const netPct = Math.max(0, 100 - opexPct - mortPct);
+
+  return (
+    <div
+      style={{
+        background: c.card,
+        border: `1px solid ${c.border}`,
+        borderRadius: 16,
+        overflow: 'hidden',
+        transition: 'border-color .15s',
+      }}
+    >
+      {/* Collapsed header */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: '100%',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '20px 24px',
+          display: 'grid',
+          gridTemplateColumns: '44px 1.3fr repeat(4, 1fr) 24px',
+          gap: 18,
+          alignItems: 'center',
+          textAlign: 'left',
+          fontFamily: 'inherit',
+        }}
+        className="re-row"
+      >
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: TEAL_BG,
+            border: `1px solid ${TEAL_BORDER}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Ic size={20} color={TEAL} />
+        </div>
+
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: c.text,
+                letterSpacing: '-0.01em',
+              }}
+            >
+              {prop.name}
+            </p>
+            <Badge color={TEAL}>{prop.type}</Badge>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: 12,
+              color: c.textMuted,
+            }}
+          >
+            <MapPin size={11} />
+            <span>{prop.city}</span>
+            <span>·</span>
+            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{prop.purchase.date}</span>
+          </div>
+        </div>
+
+        <BigNum label="Precio compra" value={fmt(prop.purchase.price)} />
+        <BigNum label="Alquiler/mes" value={fmt(prop.income.rent)} color={c.green} />
+        <BigNum
+          label="Cash-on-cash"
+          value={fmtPct(calc.cashOnCash, 2)}
+          color={calc.cashOnCash >= 0 ? c.green : c.red}
+        />
+        <BigNum
+          label="Cashflow/mes"
+          value={fmt(calc.cashflowMonth)}
+          color={calc.cashflowMonth >= 0 ? c.green : c.red}
+        />
+
+        <div
+          style={{
+            transition: 'transform .2s',
+            transform: open ? 'rotate(180deg)' : 'rotate(0)',
+            color: c.textMuted,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ChevronDown size={18} />
+        </div>
+      </button>
+
+      {/* Always-visible cashflow distribution bar */}
+      <div style={{ padding: '0 24px 18px' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: c.textMuted,
+            marginBottom: 6,
+          }}
+        >
+          <span>Distribución alquiler mensual</span>
+          <span style={{ flex: 1 }} />
+          <span
+            style={{
+              color: c.textSecondary,
+              fontVariantNumeric: 'tabular-nums',
+              textTransform: 'none',
+              letterSpacing: 0,
+              fontSize: 11,
+            }}
+          >
+            {fmt(calc.incomeMonth)} esperado
+          </span>
+        </div>
+        <div
+          style={{
+            height: 8,
+            background: c.barTrack,
+            borderRadius: 999,
+            overflow: 'hidden',
+            display: 'flex',
+          }}
+        >
+          <div style={{ width: opexPct + '%', background: c.amber, transition: 'width .2s' }} />
+          <div style={{ width: mortPct + '%', background: c.red, transition: 'width .2s' }} />
+          <div style={{ width: netPct + '%', background: c.green, transition: 'width .2s' }} />
+        </div>
+        <div
+          style={{
+            display: 'flex',
+            gap: 16,
+            marginTop: 8,
+            fontSize: 11,
+            color: c.textSecondary,
+            fontVariantNumeric: 'tabular-nums',
+            flexWrap: 'wrap',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: c.amber }} />
+            Costes {fmt(calc.opexMonth)}
+          </span>
+          {calc.mortgageMonth > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 2, background: c.red }} />
+              Hipoteca {fmt(calc.mortgageMonth)}
+            </span>
+          )}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: c.green }} />
+            Neto {fmt(calc.cashflowMonth)}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded details */}
+      {open && (
+        <div
+          style={{
+            borderTop: `1px solid ${c.border}`,
+            padding: '22px 24px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            gap: 28,
+            background: 'rgba(255,255,255,0.015)',
+          }}
+          className="re-detail"
+        >
+          {/* Adquisición */}
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: TEAL,
+                fontWeight: 600,
+                marginBottom: 12,
+              }}
+            >
+              Adquisición
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <DetailRow label="Precio compra" value={fmt(prop.purchase.price)} />
+              <DetailRow label="Gastos (~10%)" value={fmt(prop.purchase.fees)} />
+              <DetailRow
+                label="Total invertido"
+                value={fmt(calc.acqTotal)}
+                color={c.text}
+                bold
+              />
+              <DetailRow label="Fecha compra" value={prop.purchase.date} />
+              <DetailRow
+                label="Valor actual est."
+                value={fmt(prop.purchase.currentValue)}
+              />
+              <DetailRow
+                label="Revalorización"
+                value={fmtPct(calc.appreciation, 1)}
+                color={calc.appreciation >= 0 ? c.green : c.red}
+              />
+            </div>
+          </div>
+
+          {/* Financiación */}
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: TEAL,
+                fontWeight: 600,
+                marginBottom: 12,
+              }}
+            >
+              Financiación
+            </p>
+            {prop.financing.cash ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    background: c.goldBgLight,
+                    border: `1px solid ${c.goldBorder}`,
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Wallet size={13} color={c.gold} />
+                  <span style={{ fontSize: 12, color: c.gold, fontWeight: 600 }}>
+                    Compra al contado
+                  </span>
+                </div>
+                <DetailRow
+                  label="Capital aportado"
+                  value={fmt(calc.equityInvested)}
+                  bold
+                />
+                <DetailRow label="Préstamo" value="—" />
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <DetailRow label="Capital aportado" value={fmt(prop.financing.equity)} />
+                <DetailRow label="Importe préstamo" value={fmt(prop.financing.loan)} />
+                <DetailRow label="TIN" value={prop.financing.tin.toFixed(2) + '%'} />
+                <DetailRow label="Plazo" value={prop.financing.years + ' años'} />
+                <DetailRow
+                  label="Cuota mensual"
+                  value={fmt(prop.financing.monthlyPayment)}
+                  bold
+                />
+                <DetailRow label="LTV actual" value={calc.ltv.toFixed(1) + '%'} />
+              </div>
+            )}
+          </div>
+
+          {/* Ingresos / Gastos */}
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: TEAL,
+                fontWeight: 600,
+                marginBottom: 12,
+              }}
+            >
+              Ingresos / Gastos
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <DetailRow
+                label="Renta mensual"
+                value={fmt(prop.income.rent)}
+                color={c.green}
+              />
+              <DetailRow label="Vacancia est." value={prop.income.vacancyPct + '%'} />
+              <DetailRow label="Comunidad/mes" value={fmt(prop.expenses.community)} />
+              <DetailRow label="IBI/año" value={fmt(prop.expenses.ibiYear)} />
+              <DetailRow label="Seguro/año" value={fmt(prop.expenses.insuranceYear)} />
+              {prop.expenses.mgmtPct > 0 && (
+                <DetailRow label="Gestión" value={prop.expenses.mgmtPct + '%'} />
+              )}
+              <DetailRow
+                label="Mantenimiento"
+                value={prop.expenses.maintenancePct + '%'}
+              />
+            </div>
+          </div>
+
+          {/* Rentabilidad */}
+          <div>
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: TEAL,
+                fontWeight: 600,
+                marginBottom: 12,
+              }}
+            >
+              Rentabilidad
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <DetailRow label="Yield bruto" value={fmtPct(calc.yieldGross, 2)} />
+              <DetailRow
+                label="Yield neto"
+                value={fmtPct(calc.yieldNet, 2)}
+                color={calc.yieldNet >= 0 ? c.green : c.red}
+              />
+              <DetailRow
+                label="Cashflow anual"
+                value={fmt(calc.cashflowYear)}
+                color={calc.cashflowYear >= 0 ? c.green : c.red}
+                bold
+              />
+              <DetailRow
+                label="Cashflow mensual"
+                value={fmt(calc.cashflowMonth)}
+                color={calc.cashflowMonth >= 0 ? c.green : c.red}
+              />
+              <DetailRow
+                label="Cash-on-cash"
+                value={fmtPct(calc.cashOnCash, 2)}
+                color={calc.cashOnCash >= 0 ? c.green : c.red}
+                bold
+              />
+              <DetailRow
+                label="Revalorización"
+                value={fmtPct(calc.appreciation, 1)}
+                color={calc.appreciation >= 0 ? c.green : c.red}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function RealEstatePage({ setPage }) {
+  const { realEstate } = usePortfolio();
+  const c = useColors();
+  const s = realEstate.summary;
 
   return (
     <div className="bc-fade" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -423,7 +485,7 @@ export default function RealEstatePage({ setPage }) {
               fontSize: 11,
               letterSpacing: '0.12em',
               textTransform: 'uppercase',
-              color: teal,
+              color: TEAL,
               fontWeight: 500,
             }}
           >
@@ -441,181 +503,225 @@ export default function RealEstatePage({ setPage }) {
               Inmuebles
             </h1>
             <span style={{ fontSize: 13, color: c.textMuted }}>
-              {rs.totalProperties} propiedades · {fmt(rs.totalCurrentValue)} valor actual
+              {s.properties} propiedades · {fmt(s.rentMonth)}/mes brutos
             </span>
           </div>
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs — 4 tiles */}
       <div
         style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}
         className="kpi-grid"
       >
         <KPI
           label="Capital aportado"
-          value={fmt(rs.totalEquity)}
-          sub={'Equity real · ' + rs.totalProperties + ' inmuebles'}
+          value={fmt(s.totalEquity)}
+          sub="Equity real invertido"
           icon={Wallet}
-          iconColor={teal}
-          valueColor={teal}
+          iconColor={TEAL}
         />
         <KPI
-          label="Renta mensual"
-          value={fmt(rs.totalMonthlyRent)}
-          sub={'Bruta · ' + fmt(rs.totalMonthlyRent * 12) + ' anual'}
-          icon={Banknote}
+          label="Renta mensual bruta"
+          value={fmt(s.rentMonth)}
+          sub={fmt(s.rentMonth * 12) + ' anual'}
+          icon={TrendingUp}
           iconColor={c.green}
-          valueColor={c.green}
         />
         <KPI
           label="Yield neto medio"
-          value={rs.avgNetYield.toFixed(2) + '%'}
-          sub="Tras costes, sin hipoteca"
+          value={s.avgYieldNet.toFixed(2) + '%'}
+          sub="Tras costes, antes de hipoteca"
           icon={Percent}
           iconColor={c.gold}
-          valueColor={c.gold}
+          valueColor={s.avgYieldNet >= 0 ? c.green : c.red}
         />
         <KPI
           label="Cash-on-cash medio"
-          value={rs.avgCashOnCash.toFixed(2) + '%'}
-          sub="Rentabilidad sobre equity"
-          icon={TrendingUp}
-          iconColor={rs.avgCashOnCash >= 0 ? c.green : c.red}
-          valueColor={rs.avgCashOnCash >= 0 ? c.green : c.red}
+          value={s.avgCoC.toFixed(2) + '%'}
+          sub="Retorno sobre equity"
+          icon={Activity}
+          iconColor={TEAL}
+          valueColor={s.avgCoC >= 0 ? c.green : c.red}
         />
       </div>
 
-      {/* Cashflow summary */}
-      <Card title="Cashflow consolidado" subtitle="Ingresos y gastos mensuales agregados" pad={24}>
+      {/* Cashflow consolidado */}
+      <Card title="Cashflow consolidado" subtitle="Vista mensual agregada" pad={26}>
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 20,
+            gap: 24,
           }}
           className="two-col"
         >
-          <div>
+          {/* Ingresos */}
+          <div
+            style={{
+              padding: '18px 20px',
+              background: 'rgba(16,185,129,0.07)',
+              border: `1px solid ${c.greenBorder}`,
+              borderRadius: 12,
+            }}
+          >
             <p
               style={{
                 fontSize: 10,
-                letterSpacing: '0.08em',
+                letterSpacing: '0.10em',
                 textTransform: 'uppercase',
-                color: c.textSecondary,
-              }}
-            >
-              Ingresos/mes
-            </p>
-            <p
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
                 color: c.green,
-                marginTop: 6,
-                fontVariantNumeric: 'tabular-nums',
+                fontWeight: 600,
               }}
             >
-              +{fmt(rs.totalMonthlyRent)}
-            </p>
-            <p style={{ fontSize: 11, color: c.textMuted, marginTop: 4 }}>
-              Alquileres consolidados
-            </p>
-          </div>
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.textSecondary,
-              }}
-            >
-              Cashflow neto/mes
+              Ingresos / mes
             </p>
             <p
               style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: rs.totalMonthlyCashflow >= 0 ? c.green : c.red,
-                marginTop: 6,
-                fontVariantNumeric: 'tabular-nums',
-              }}
-            >
-              {(rs.totalMonthlyCashflow >= 0 ? '+' : '') +
-                fmt(rs.totalMonthlyCashflow)}
-            </p>
-            <p style={{ fontSize: 11, color: c.textMuted, marginTop: 4 }}>
-              Tras costes e hipotecas
-            </p>
-          </div>
-          <div>
-            <p
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: c.textSecondary,
-              }}
-            >
-              Equity / Apalancamiento
-            </p>
-            <p
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
+                fontSize: 28,
+                fontWeight: 800,
                 color: c.text,
-                marginTop: 6,
+                marginTop: 10,
+                letterSpacing: '-0.02em',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              {fmt(rs.totalEquity)}
+              {fmt(s.rentMonth)}
             </p>
-            <p style={{ fontSize: 11, color: c.textMuted, marginTop: 4 }}>
-              {fmt(rs.totalLoan)} en hipotecas ·{' '}
-              {((rs.totalLoan / (rs.totalEquity + rs.totalLoan)) * 100).toFixed(0)}% LTV
+            <p style={{ fontSize: 12, color: c.textMuted, marginTop: 6 }}>
+              Alquiler bruto agregado
+            </p>
+          </div>
+
+          {/* Cashflow neto */}
+          <div
+            style={{
+              padding: '18px 20px',
+              background: s.cashflowMonth >= 0 ? TEAL_BG : c.redBg,
+              border: `1px solid ${s.cashflowMonth >= 0 ? TEAL_BORDER : c.redBorder}`,
+              borderRadius: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: s.cashflowMonth >= 0 ? TEAL : c.red,
+                fontWeight: 600,
+              }}
+            >
+              Cashflow neto / mes
+            </p>
+            <p
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                color: s.cashflowMonth >= 0 ? c.text : c.red,
+                marginTop: 10,
+                letterSpacing: '-0.02em',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {(s.cashflowMonth >= 0 ? '' : '') + fmt(s.cashflowMonth)}
+            </p>
+            <p style={{ fontSize: 12, color: c.textMuted, marginTop: 6 }}>
+              {fmt(s.cashflowMonth * 12)} anual tras gastos e hipoteca
+            </p>
+          </div>
+
+          {/* Equity vs hipotecas */}
+          <div
+            style={{
+              padding: '18px 20px',
+              background: c.card,
+              border: `1px solid ${c.border}`,
+              borderRadius: 12,
+            }}
+          >
+            <p
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.10em',
+                textTransform: 'uppercase',
+                color: c.textSecondary,
+                fontWeight: 600,
+              }}
+            >
+              Equity vs hipotecas
+            </p>
+            <div style={{ display: 'flex', gap: 14, marginTop: 10, alignItems: 'baseline' }}>
+              <p
+                style={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  color: c.text,
+                  fontVariantNumeric: 'tabular-nums',
+                  letterSpacing: '-0.01em',
+                }}
+              >
+                {fmt(s.totalEquity)}
+              </p>
+              <span style={{ fontSize: 12, color: c.textMuted }}>equity</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+              <div
+                style={{
+                  flex: 1,
+                  height: 6,
+                  background: c.barTrack,
+                  borderRadius: 999,
+                  overflow: 'hidden',
+                  display: 'flex',
+                }}
+              >
+                <div style={{ width: 100 - s.ltv + '%', background: TEAL }} />
+                <div style={{ width: s.ltv + '%', background: c.red }} />
+              </div>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: c.textSecondary,
+                  fontWeight: 600,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                LTV {s.ltv.toFixed(1)}%
+              </span>
+            </div>
+            <p
+              style={{
+                fontSize: 11,
+                color: c.textMuted,
+                marginTop: 8,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {fmt(s.totalLoans)} en hipotecas · {fmt(s.totalValue)} valor total
             </p>
           </div>
         </div>
       </Card>
 
-      {/* Property rows */}
-      <section>
-        <div
+      {/* Property cards */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <p
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            marginBottom: 14,
+            fontSize: 11,
+            letterSpacing: '0.10em',
+            textTransform: 'uppercase',
+            color: c.textSecondary,
+            fontWeight: 600,
           }}
         >
-          <h3
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: c.text,
-              letterSpacing: '-0.01em',
-            }}
-          >
-            Propiedades
-          </h3>
-          <p style={{ fontSize: 11, color: c.textMuted }}>
-            Click para desplegar detalle
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {realEstate.map((property) => (
-            <PropertyRow
-              key={property.id}
-              property={property}
-              c={c}
-              computeMetrics={computeRealEstateMetrics}
-            />
-          ))}
-        </div>
-      </section>
+          Propiedades · click para expandir
+        </p>
+        {realEstate.properties.map((p) => (
+          <PropertyCard key={p.id} prop={p} />
+        ))}
+      </div>
 
-      {/* Footer note */}
+      {/* Fictitious banner */}
       <div
         style={{
           padding: '14px 16px',
@@ -627,10 +733,10 @@ export default function RealEstatePage({ setPage }) {
           lineHeight: 1.5,
         }}
       >
-        <strong>⚠️ Datos ficticios:</strong> los importes de financiación, costes y valor
-        actual son estimativos para visualizar el modelo. Reemplázalos con números reales en{' '}
+        <strong>⚠️ Datos ficticios:</strong> financiación, costes y valor actual son
+        estimativos. Reemplázalos en{' '}
         <code style={{ fontFamily: 'ui-monospace, Menlo, monospace' }}>
-          src/data/portfolio.js → realEstate
+          src/data/portfolio.js → _properties
         </code>
         .
       </div>

@@ -12,6 +12,7 @@ import RentaFijaPage from './pages/RentaFijaPage';
 import PEPage from './pages/PEPage';
 import VCPage from './pages/VCPage';
 import RealEstatePage from './pages/RealEstatePage';
+import RealEstateMobile from './pages/RealEstateMobile';
 import { PortfolioProvider } from './hooks/usePortfolioData';
 import { ThemeProvider } from './hooks/useTheme';
 import { useColors } from './hooks/useColors';
@@ -39,7 +40,7 @@ const mobilePages = {
   rentafija: RentaFijaPage,
   pe: PEPage,
   vc: VCPage,
-  realestate: RealEstatePage,
+  realestate: RealEstateMobile,
 };
 
 function AppInner() {
