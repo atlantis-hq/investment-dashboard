@@ -1,4 +1,4 @@
-import { LayoutDashboard, TrendingUp, Landmark, Bitcoin, Shield, Handshake, Building2, Rocket, X, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, TrendingUp, Landmark, Bitcoin, Shield, Handshake, Building2, Rocket, Home, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../hooks/useTheme';
 import { useColors } from '../hooks/useColors';
 
@@ -11,6 +11,7 @@ const nav = [
   { id: 'loans', label: 'Préstamos', icon: Handshake },
   { id: 'pe', label: 'Private Equity', icon: Building2 },
   { id: 'vc', label: 'VC Startups', icon: Rocket },
+  { id: 'realestate', label: 'Real Estate', icon: Home },
 ];
 
 export default function Sidebar({ page, setPage, open, setOpen }) {

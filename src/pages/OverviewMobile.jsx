@@ -6,6 +6,7 @@ import {
   Handshake,
   Building2,
   Rocket,
+  Home,
   AlertTriangle,
   ChevronRight,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ const meta = {
   'Préstamos':         { page: 'loans',     Ic: Handshake },
   'PE':                { page: 'pe',        Ic: Building2 },
   'VC Startups':       { page: 'vc',        Ic: Rocket },
+  'Real Estate':       { page: 'realestate', Ic: Home },
 };
 
 export default function OverviewMobile({ setPage }) {

@@ -11,6 +11,7 @@ import CryptoPage from './pages/CryptoPage';
 import RentaFijaPage from './pages/RentaFijaPage';
 import PEPage from './pages/PEPage';
 import VCPage from './pages/VCPage';
+import RealEstatePage from './pages/RealEstatePage';
 import { PortfolioProvider } from './hooks/usePortfolioData';
 import { ThemeProvider } from './hooks/useTheme';
 import { useColors } from './hooks/useColors';
@@ -25,6 +26,7 @@ const desktopPages = {
   loans: LoansPage,
   pe: PEPage,
   vc: VCPage,
+  realestate: RealEstatePage,
 };
 
 const mobilePages = {
@@ -37,6 +39,7 @@ const mobilePages = {
   rentafija: RentaFijaPage,
   pe: PEPage,
   vc: VCPage,
+  realestate: RealEstatePage,
 };
 
 function AppInner() {

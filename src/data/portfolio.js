@@ -8,10 +8,10 @@ const _years = (new Date() - _inceptionDate) / (365.25 * 24 * 60 * 60 * 1000);
 const _annualizedReturn = (Math.pow(1074534 / 1024334, 1 / _years) - 1) * 100;
 
 export const portfolioSummary = {
-  totalValue: 1074534,
-  totalInvested: 1024334,
-  totalReturn: 50200,
-  totalReturnPct: 4.90,
+  totalValue: 2539334,
+  totalInvested: 2489334,
+  totalReturn: 50000,
+  totalReturnPct: 2.01,
   annualizedReturnPct: Math.round(_annualizedReturn * 100) / 100,
   inceptionDate: '2024-01-01',
   lastUpdated: '2026-04-07',
@@ -25,6 +25,7 @@ export const categoryAllocation = [
   { name: 'Préstamos', value: 264443, color: '#8b5cf6', invested: 237880, return: 11.17 },
   { name: 'PE', value: 290000, color: '#ec4899', invested: 290000, return: 0 },
   { name: 'VC Startups', value: 150000, color: '#f43f5e', invested: 150000, return: 0 },
+  { name: 'Real Estate', value: 1465000, color: '#14b8a6', invested: 1465000, return: 0 },
 ];
 
 export const etfsFunds = [
@@ -168,6 +169,168 @@ export const vcPeFunds = vcStartups.map(v => ({
   vintage: 2024,
 }));
 
+
+// --- Real Estate (datos ficticios — reemplazar con reales) ---
+// Shape:
+//   purchasePrice        — precio compra
+//   acquisitionCosts     — notaría + ITP/AJD + registro + gestoría (~10%)
+//   totalCost            — purchasePrice + acquisitionCosts
+//   financing: { type, equity, loanAmount, rate, termMonths, monthlyPayment }
+//   monthlyRent          — alquiler mensual neto
+//   vacancyRate          — % vacío esperado (ej. 0.04 = 4%)
+//   monthlyCosts: { community, ibi, insurance, management, maintenance }
+//   currentValue         — valor de mercado estimado hoy
+export const realEstate = [
+  {
+    id: 'piso-gijon',
+    name: 'Piso Gijón',
+    city: 'Gijón',
+    type: 'Residencial',
+    purchaseDate: '15/06/2024',
+    purchasePrice: 95000,
+    acquisitionCosts: 9500,
+    financing: {
+      type: 'mortgage',
+      equity: 47500,
+      loanAmount: 47500,
+      rate: 3.5,
+      termMonths: 300,
+      monthlyPayment: 237.88,
+    },
+    monthlyRent: 550,
+    vacancyRate: 0.04,
+    monthlyCosts: {
+      community: 40,
+      ibi: 250 / 12,
+      insurance: 180 / 12,
+      management: 0,
+      maintenance: 27.5,
+    },
+    currentValue: 102000,
+    status: 'Alquilado',
+  },
+  {
+    id: 'piso-vitoria',
+    name: 'Piso Vitoria',
+    city: 'Vitoria',
+    type: 'Residencial',
+    purchaseDate: '10/03/2025',
+    purchasePrice: 170000,
+    acquisitionCosts: 17000,
+    financing: {
+      type: 'mortgage',
+      equity: 68000,
+      loanAmount: 102000,
+      rate: 3.2,
+      termMonths: 360,
+      monthlyPayment: 441.05,
+    },
+    monthlyRent: 850,
+    vacancyRate: 0.04,
+    monthlyCosts: {
+      community: 80,
+      ibi: 400 / 12,
+      insurance: 220 / 12,
+      management: 0,
+      maintenance: 42.5,
+    },
+    currentValue: 178000,
+    status: 'Alquilado',
+  },
+  {
+    id: 'pabellon-industrial',
+    name: 'Pabellón Industrial',
+    city: 'Álava',
+    type: 'Industrial',
+    purchaseDate: '01/10/2024',
+    purchasePrice: 1200000,
+    acquisitionCosts: 120000,
+    financing: {
+      type: 'mortgage',
+      equity: 360000,
+      loanAmount: 840000,
+      rate: 4.2,
+      termMonths: 240,
+      monthlyPayment: 5176.29,
+    },
+    monthlyRent: 8500,
+    vacancyRate: 0.02,
+    monthlyCosts: {
+      community: 200,
+      ibi: 2000 / 12,
+      insurance: 400 / 12,
+      management: 0,
+      maintenance: 425,
+    },
+    currentValue: 1250000,
+    status: 'Alquilado',
+  },
+];
+
+// --- Real Estate helpers (yield / cashflow) ---
+// Para cada piso devuelve métricas calculadas.
+export function computeRealEstateMetrics(p) {
+  const costs = Object.values(p.monthlyCosts).reduce((a, b) => a + b, 0);
+  const mortgage = p.financing.monthlyPayment || 0;
+  const rentExpected = p.monthlyRent * (1 - p.vacancyRate);
+
+  const grossYield = (p.monthlyRent * 12 / p.purchasePrice) * 100;
+  const netYield =
+    ((rentExpected - costs) * 12 / (p.purchasePrice + p.acquisitionCosts)) * 100;
+  const monthlyCashflow = rentExpected - costs - mortgage;
+  const annualCashflow = monthlyCashflow * 12;
+  const totalInvestedEquity = p.financing.equity + p.acquisitionCosts;
+  const cashOnCash = totalInvestedEquity > 0 ? (annualCashflow / totalInvestedEquity) * 100 : 0;
+  const appreciation = p.currentValue - p.purchasePrice;
+  const appreciationPct = (appreciation / p.purchasePrice) * 100;
+
+  return {
+    costsMonthly: costs,
+    rentExpected,
+    grossYield,
+    netYield,
+    monthlyCashflow,
+    annualCashflow,
+    totalInvestedEquity,
+    cashOnCash,
+    appreciation,
+    appreciationPct,
+    totalMonthlyIncome: rentExpected,
+    totalMonthlyOutflow: costs + mortgage,
+  };
+}
+
+export const realEstateSummary = {
+  totalProperties: realEstate.length,
+  totalPurchasePrice: realEstate.reduce((s, p) => s + p.purchasePrice, 0),
+  totalAcquisitionCosts: realEstate.reduce((s, p) => s + p.acquisitionCosts, 0),
+  totalEquity: realEstate.reduce(
+    (s, p) => s + p.financing.equity + p.acquisitionCosts,
+    0
+  ),
+  totalLoan: realEstate.reduce((s, p) => s + p.financing.loanAmount, 0),
+  totalMonthlyRent: realEstate.reduce((s, p) => s + p.monthlyRent, 0),
+  totalMonthlyCashflow: realEstate.reduce(
+    (s, p) => s + computeRealEstateMetrics(p).monthlyCashflow,
+    0
+  ),
+  totalCurrentValue: realEstate.reduce((s, p) => s + p.currentValue, 0),
+  avgGrossYield:
+    realEstate.length > 0
+      ? realEstate.reduce((s, p) => s + computeRealEstateMetrics(p).grossYield, 0) /
+        realEstate.length
+      : 0,
+  avgNetYield:
+    realEstate.length > 0
+      ? realEstate.reduce((s, p) => s + computeRealEstateMetrics(p).netYield, 0) /
+        realEstate.length
+      : 0,
+  avgCashOnCash:
+    realEstate.length > 0
+      ? realEstate.reduce((s, p) => s + computeRealEstateMetrics(p).cashOnCash, 0) /
+        realEstate.length
+      : 0,
+};
 
 // Computed totals
 export const loansSummary = {

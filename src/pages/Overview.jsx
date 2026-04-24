@@ -15,6 +15,7 @@ import {
   Handshake,
   Building2,
   Rocket,
+  Home,
 } from 'lucide-react';
 import { usePortfolio } from '../hooks/usePortfolioData';
 import { useColors } from '../hooks/useColors';
@@ -34,6 +35,7 @@ const iconFor = {
   'Fondos Monetarios': Landmark,
   'Criptomonedas': Bitcoin,
   'Renta Fija': Shield,
+  'Real Estate': Home,
 };
 
 const pageFor = {
@@ -44,6 +46,7 @@ const pageFor = {
   'Fondos Monetarios': 'monetary',
   'Criptomonedas': 'crypto',
   'Renta Fija': 'rentafija',
+  'Real Estate': 'realestate',
 };
 
 function Donut({ data, total, size = 200, thickness = 24 }) {
@@ -132,7 +135,7 @@ function Donut({ data, total, size = 200, thickness = 24 }) {
         >
           {selected
             ? ((selected.invested / total) * 100).toFixed(1) + '%'
-            : '7 categorías'}
+            : '8 categorías'}
         </span>
       </div>
     </div>
@@ -226,7 +229,7 @@ export default function Overview({ setPage }) {
   const c = useColors();
 
   const iliquido = categoryAllocation
-    .filter((cat) => cat.name === 'PE' || cat.name === 'VC Startups')
+    .filter((cat) => cat.name === 'PE' || cat.name === 'VC Startups' || cat.name === 'Real Estate')
     .reduce((s, cat) => s + cat.invested, 0);
   const liquidez = categoryAllocation
     .filter((cat) => ['Fondos Monetarios', 'Renta Fija', 'Criptomonedas'].includes(cat.name))
@@ -369,7 +372,7 @@ export default function Overview({ setPage }) {
         <KPI
           label="Ilíquido"
           value={pctIliquido + '%'}
-          sub={fmt(iliquido) + ' · PE + VC'}
+          sub={fmt(iliquido) + ' · PE + VC + RE'}
           icon={Lock}
           iconColor={c.amber}
           valueColor={c.amber}
@@ -651,7 +654,7 @@ export default function Overview({ setPage }) {
             Por categoría
           </h3>
           <p style={{ fontSize: 11, color: c.textMuted }}>
-            7 categorías · {fmt(ps.totalInvested)} total
+            8 categorías · {fmt(ps.totalInvested)} total
           </p>
         </div>
         <div
@@ -666,7 +669,7 @@ export default function Overview({ setPage }) {
             const pct = ((cat.invested / ps.totalInvested) * 100).toFixed(1);
             const ret = cat.return;
             const Ic = iconFor[cat.name];
-            const illiquid = cat.name === 'PE' || cat.name === 'VC Startups';
+            const illiquid = cat.name === 'PE' || cat.name === 'VC Startups' || cat.name === 'Real Estate';
             return (
               <Card
                 key={cat.name}
