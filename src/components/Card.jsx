@@ -1,13 +1,55 @@
+import { useState } from 'react';
 import { useColors } from '../hooks/useColors';
 
-export default function Card({ children, className = '', title, subtitle }) {
+export default function Card({
+  children,
+  className = '',
+  title,
+  subtitle,
+  action,
+  pad = 20,
+  hover = false,
+  onClick,
+  style,
+}) {
   const c = useColors();
+  const [h, setH] = useState(false);
+  const interactive = hover || !!onClick;
+
   return (
-    <div className={`rounded-xl p-5 ${className}`} style={{ background: c.card, border: `1px solid ${c.border}` }}>
-      {title && (
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold" style={{ color: c.text }}>{title}</h3>
-          {subtitle && <p className="text-xs mt-0.5" style={{ color: c.textSecondary }}>{subtitle}</p>}
+    <div
+      onClick={onClick}
+      onMouseEnter={interactive ? () => setH(true) : undefined}
+      onMouseLeave={interactive ? () => setH(false) : undefined}
+      className={className}
+      style={{
+        background: interactive && h ? c.cardHover : c.card,
+        border: `1px solid ${interactive && h ? c.borderHover : c.border}`,
+        borderRadius: 16,
+        padding: pad,
+        transition: 'all .15s ease',
+        cursor: onClick ? 'pointer' : 'default',
+        ...style,
+      }}
+    >
+      {(title || subtitle || action) && (
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 16,
+          }}
+        >
+          <div>
+            {title && (
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: c.text }}>{title}</h3>
+            )}
+            {subtitle && (
+              <p style={{ fontSize: 12, color: c.textMuted, marginTop: 2 }}>{subtitle}</p>
+            )}
+          </div>
+          {action}
         </div>
       )}
       {children}

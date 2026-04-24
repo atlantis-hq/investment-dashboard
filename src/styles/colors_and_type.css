@@ -1,0 +1,246 @@
+/* ==========================================================================
+   Bentor Capital — Colors & Typography Tokens
+   Source of truth: src/hooks/useColors.js + src/index.css + Tailwind usage
+   --------------------------------------------------------------------------
+   Theme: DARK is primary. LIGHT is maintained as a functional alt.
+   Brand signature: gold #c8a97e (dark) / #a07a45 (light)
+   ========================================================================== */
+
+/* Inter font is imported from index.css to satisfy CSS @import ordering rules. */
+
+/* ---------- Root / DARK theme (default) ---------- */
+:root,
+:root[data-theme="dark"] {
+  /* Surfaces */
+  --bg:              #0a0e17;   /* page */
+  --bg-secondary:    #111827;   /* sidebar */
+  --card:            #1a2035;
+  --card-hover:      #1e2642;
+  --border:          #1e293b;
+  --border-hover:    rgba(200,169,126,0.4);
+  --sidebar:         #111827;
+  --sidebar-border:  #1e293b;
+  --bar-track:       #1e293b;
+  --tooltip-bg:      #1a2035;
+  --tooltip-border:  #1e293b;
+  --overlay:         rgba(0,0,0,0.60);
+
+  /* Text */
+  --text:            #ffffff;
+  --text-secondary:  #94a3b8;
+  --text-muted:      #64748b;
+
+  /* Brand signature — GOLD */
+  --gold:            #c8a97e;
+  --gold-bg:         rgba(200,169,126,0.20);
+  --gold-bg-light:   rgba(200,169,126,0.05);
+  --gold-border:     rgba(200,169,126,0.30);
+
+  /* Semantic — Semáforo */
+  --green:           #10b981;   /* positive / earned */
+  --green-bg:        rgba(16,185,129,0.10);
+  --green-border:    rgba(16,185,129,0.20);
+  --red:             #ef4444;   /* negative / urgent */
+  --red-bg:          rgba(239,68,68,0.10);
+  --red-border:      rgba(239,68,68,0.20);
+  --amber:           #f59e0b;   /* neutral / warning / notices */
+  --amber-bg:        rgba(245,158,11,0.10);
+  --amber-border:    rgba(245,158,11,0.20);
+
+  /* Category accents (chart palette) */
+  --cat-etf:         #3b82f6;   /* blue */
+  --cat-gold:        #06b6d4;   /* cyan (Oro/Monetarios) */
+  --cat-crypto:      #f59e0b;   /* amber */
+  --cat-rf:          #10b981;   /* green */
+  --cat-loans:       #8b5cf6;   /* purple */
+  --cat-pe:          #ec4899;   /* pink */
+  --cat-vc:          #f43f5e;   /* rose */
+
+  /* Type */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Radii — rounded-xl is the house corner */
+  --radius-sm:  6px;
+  --radius-md:  8px;    /* rounded-lg */
+  --radius-lg:  12px;   /* rounded-xl — cards, KPIs, nav items */
+  --radius-xl:  16px;   /* rounded-2xl — hero KPIs, page panels */
+  --radius-full: 9999px;
+
+  /* Elevation (system is flat-on-dark; shadows mostly from borders) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.25);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.35);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.45);
+
+  /* Layout */
+  --content-max-width: 1400px;
+  --sidebar-width: 256px; /* w-64 */
+}
+
+/* ---------- LIGHT theme ---------- */
+:root[data-theme="light"] {
+  --bg:              #f8fafc;
+  --bg-secondary:    #ffffff;
+  --card:            #ffffff;
+  --card-hover:      #f1f5f9;
+  --border:          #e2e8f0;
+  --border-hover:    rgba(160,122,69,0.40);
+  --sidebar:         #ffffff;
+  --sidebar-border:  #e2e8f0;
+  --bar-track:       #e2e8f0;
+  --tooltip-bg:      #ffffff;
+  --tooltip-border:  #e2e8f0;
+  --overlay:         rgba(0,0,0,0.30);
+
+  --text:            #0f172a;
+  --text-secondary:  #475569;
+  --text-muted:      #94a3b8;
+
+  --gold:            #a07a45;
+  --gold-bg:         rgba(160,122,69,0.12);
+  --gold-bg-light:   rgba(160,122,69,0.05);
+  --gold-border:     rgba(160,122,69,0.30);
+
+  --green:           #059669;
+  --green-bg:        rgba(5,150,105,0.08);
+  --green-border:    rgba(5,150,105,0.20);
+  --red:             #dc2626;
+  --red-bg:          rgba(220,38,38,0.08);
+  --red-border:      rgba(220,38,38,0.20);
+  --amber:           #d97706;
+  --amber-bg:        rgba(217,119,6,0.08);
+  --amber-border:    rgba(217,119,6,0.20);
+
+  --cat-etf:         #2563eb;
+  --cat-gold:        #0891b2;
+  --cat-crypto:      #d97706;
+  --cat-rf:          #059669;
+  --cat-loans:       #7c3aed;
+  --cat-pe:          #db2777;
+  --cat-vc:          #e11d48;
+}
+
+/* ==========================================================================
+   Base type — semantic classes usable as .h1, .p, etc.
+   Scale chosen from actual usage in pages (Overview, LoansPage).
+   ========================================================================== */
+
+html { font-family: var(--font-sans); }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Display — hero numbers (patrimonio, big returns) */
+.t-display {
+  font-size: 30px;        /* desktop */
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 768px) { .t-display { font-size: 24px; } }
+
+/* H1 — page titles ("Dashboard") */
+.t-h1, h1.t-h1 {
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+@media (max-width: 768px) { .t-h1 { font-size: 24px; } }
+
+/* H2 — page headers ("Préstamos") */
+.t-h2, h2.t-h2 {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* H3 — section headers ("Por Categoría") */
+.t-h3, h3.t-h3 {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* H4 — card headings */
+.t-h4, h4.t-h4 {
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* KPI — hero metric values */
+.t-kpi-lg {
+  font-size: 24px;
+  line-height: 1.1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.t-kpi-md {
+  font-size: 20px;
+  line-height: 1.15;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Body */
+.t-body {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
+}
+.t-body-sm {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* Meta / secondary text */
+.t-meta {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Eyebrow — small caps label above values */
+.t-eyebrow {
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Micro — tiniest tags, percentages next to KPIs */
+.t-micro {
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Numeric utilities */
+.tnum { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); }
+
+/* ==========================================================================
+   Semaforo utility colors (inline status text)
+   ========================================================================== */
+.sem-pos { color: var(--green); }
+.sem-neg { color: var(--red); }
+.sem-neu { color: var(--amber); }
+.gold    { color: var(--gold); }

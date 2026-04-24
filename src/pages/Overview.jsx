@@ -1,301 +1,777 @@
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { TrendingUp, TrendingDown, ArrowRight, Wallet, Lock, Droplets, Calendar, BarChart3, AlertTriangle, Bell, Target } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import {
+  Wallet,
+  Target,
+  Droplets,
+  Lock,
+  AlertTriangle,
+  Bell,
+  ArrowRight,
+  ChevronRight,
+  TrendingUp,
+  Landmark,
+  Bitcoin,
+  Shield,
+  Handshake,
+  Building2,
+  Rocket,
+} from 'lucide-react';
 import { usePortfolio } from '../hooks/usePortfolioData';
-import { useIsMobile } from '../hooks/useMediaQuery';
 import { useColors } from '../hooks/useColors';
+import Card from '../components/Card';
+import KPI from '../components/KPI';
+import HeroKPI from '../components/HeroKPI';
+import Badge from '../components/Badge';
+import ProgressBar from '../components/ProgressBar';
 
-const fmt = (v) => '€' + (v || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 });
-const fmtDec = (v) => '€' + (v || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmt = (v) => '€' + Math.round(v || 0).toLocaleString('es-ES');
 
-function SemaforoText({ value, c, suffix = '%' }) {
-  const color = value > 0.5 ? c.green : value < -0.5 ? c.red : c.amber;
-  return <span style={{ color }}>{value >= 0 ? '+' : ''}{value}{suffix}</span>;
-}
+const iconFor = {
+  'Préstamos': Handshake,
+  'PE': Building2,
+  'VC Startups': Rocket,
+  'ETFs + Fondos': TrendingUp,
+  'Fondos Monetarios': Landmark,
+  'Criptomonedas': Bitcoin,
+  'Renta Fija': Shield,
+};
 
-function ProgressBar({ value, max, color, c }) {
-  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+const pageFor = {
+  'Préstamos': 'loans',
+  'PE': 'pe',
+  'VC Startups': 'vc',
+  'ETFs + Fondos': 'etfs',
+  'Fondos Monetarios': 'monetary',
+  'Criptomonedas': 'crypto',
+  'Renta Fija': 'rentafija',
+};
+
+function Donut({ data, total, size = 200, thickness = 24 }) {
+  const c = useColors();
+  const [hover, setHover] = useState(null);
+  const r = size / 2 - thickness / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+
+  let acc = 0;
+  const arcs = data.map((d) => {
+    const start = acc;
+    const len = (d.invested / total) * 2 * Math.PI;
+    acc += len;
+    return { ...d, start, len };
+  });
+
+  const arcPath = (startA, len) => {
+    const x1 = cx + r * Math.cos(startA - Math.PI / 2);
+    const y1 = cy + r * Math.sin(startA - Math.PI / 2);
+    const x2 = cx + r * Math.cos(startA + len - Math.PI / 2);
+    const y2 = cy + r * Math.sin(startA + len - Math.PI / 2);
+    const large = len > Math.PI ? 1 : 0;
+    return `M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2}`;
+  };
+
+  const selected = hover !== null ? arcs[hover] : null;
+
   return (
-    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: c.barTrack }}>
-      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      <svg width={size} height={size}>
+        {arcs.map((a, i) => (
+          <path
+            key={i}
+            d={arcPath(a.start, a.len)}
+            stroke={a.color}
+            strokeWidth={hover === i ? thickness + 4 : thickness}
+            fill="none"
+            strokeLinecap="butt"
+            opacity={hover !== null && hover !== i ? 0.35 : 1}
+            style={{ transition: 'all .15s', cursor: 'pointer' }}
+            onMouseEnter={() => setHover(i)}
+            onMouseLeave={() => setHover(null)}
+          />
+        ))}
+      </svg>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: c.textMuted,
+            fontWeight: 500,
+          }}
+        >
+          {selected ? selected.name : 'Total invertido'}
+        </span>
+        <span
+          style={{
+            fontSize: 22,
+            fontWeight: 700,
+            color: c.text,
+            fontVariantNumeric: 'tabular-nums',
+            marginTop: 4,
+          }}
+        >
+          {fmt(selected ? selected.invested : total)}
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            color: selected ? selected.color : c.textSecondary,
+            marginTop: 4,
+          }}
+        >
+          {selected
+            ? ((selected.invested / total) * 100).toFixed(1) + '%'
+            : '7 categorías'}
+        </span>
+      </div>
     </div>
   );
 }
 
-export default function Overview({ setPage }) {
-  const { portfolioSummary: ps, categoryAllocation, loans, loansSummary: ls, cashflow, evolution, alerts } = usePortfolio();
-  const isMobile = useIsMobile();
+function EvolutionChart({ data }) {
   const c = useColors();
-
-  const monetaryValue = categoryAllocation.find(cat => cat.name === 'Fondos Monetarios')?.value || 0;
-  const rentaFijaValue = categoryAllocation.find(cat => cat.name === 'Renta Fija')?.value || 0;
-  const cryptoValue = categoryAllocation.find(cat => cat.name === 'Criptomonedas')?.value || 0;
-  const liquidez = monetaryValue + rentaFijaValue + cryptoValue;
-
-  const peInv = categoryAllocation.find(cat => cat.name === 'PE')?.invested || 0;
-  const vcInv = categoryAllocation.find(cat => cat.name === 'VC Startups')?.invested || 0;
-  const pctIliquido = ps.totalInvested > 0 ? ((peInv + vcInv) / ps.totalInvested * 100).toFixed(1) : '0';
-
-  const monthlyIncome = ls.totalInterestEarned > 0 ? (ls.totalInterestEarned / 12).toFixed(0) : '0';
-
-  const upcomingLoans = [...loans]
-    .sort((a, b) => {
-      const [da, ma, ya] = a.endDate.split('/');
-      const [db, mb, yb] = b.endDate.split('/');
-      return new Date(ya, ma - 1, da) - new Date(yb, mb - 1, db);
-    })
-    .slice(0, 4);
-
-  const categories = [
-    { id: 'loans', name: 'Préstamos', color: c.purple, icon: '🏦', invested: ls.totalCapital, value: ls.totalCapital + ls.totalInterestEarned, detail: `${loans.length} activos · TIR media ${ls.avgTir}%`, highlight: fmtDec(ls.totalInterestEarned) + ' en intereses', highlightColor: c.green },
-    { id: 'pe', name: 'Private Equity', color: c.pink, icon: '🏢', invested: peInv, value: peInv, detail: '3 participaciones directas', highlight: 'Ilíquido', highlightColor: c.amber },
-    { id: 'vc', name: 'VC Startups', color: c.rose, icon: '🚀', invested: vcInv, value: vcInv, detail: '2 fondos venture capital', highlight: 'Ilíquido', highlightColor: c.amber },
-    { id: 'etfs', name: 'ETFs + Fondos', color: c.blue, icon: '📈', ...categoryAllocation.find(cat => cat.name === 'ETFs + Fondos'), detail: '1 fondo (Gestivalue Cap)' },
-    { id: 'monetary', name: 'Oro Físico', color: c.cyan, icon: '🥇', ...categoryAllocation.find(cat => cat.name === 'Fondos Monetarios'), detail: '500g en lingotes' },
-    { id: 'crypto', name: 'Criptomonedas', color: c.amber, icon: '₿', ...categoryAllocation.find(cat => cat.name === 'Criptomonedas'), detail: '1.04 BTC' },
-    { id: 'rentafija', name: 'Renta Fija', color: c.green, icon: '🛡️', ...categoryAllocation.find(cat => cat.name === 'Renta Fija'), detail: 'Revolut · 2.27% TAE' },
-  ];
-
-  const PieTooltip = ({ active, payload }) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div className="rounded-lg p-3 text-xs shadow-xl" style={{ background: c.tooltipBg, border: `1px solid ${c.tooltipBorder}` }}>
-        <p className="font-semibold" style={{ color: c.text }}>{d.name}</p>
-        <p style={{ color: c.textSecondary }}>{fmt(d.invested)} invertido</p>
-      </div>
-    );
-  };
-
-  const ChartTooltip = ({ active, payload, label }) => {
-    if (!active || !payload?.length) return null;
-    return (
-      <div className="rounded-lg p-3 text-xs shadow-xl" style={{ background: c.tooltipBg, border: `1px solid ${c.tooltipBorder}` }}>
-        <p className="font-semibold mb-1" style={{ color: c.text }}>{label}</p>
-        {payload.map((p, i) => (
-          <p key={i} style={{ color: p.color }}>{p.name}: {fmt(p.value)}</p>
-        ))}
-      </div>
-    );
-  };
+  if (!data || data.length === 0) return null;
+  const vals = data.map((d) => d.invested);
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+  const w = 620;
+  const h = 120;
+  const pts = data.map((d, i) => [
+    ((i / (data.length - 1)) * w).toFixed(1),
+    (h - ((d.invested - min) / range) * (h - 10) - 5).toFixed(1),
+  ]);
+  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ');
+  const fillPath = linePath + ` L${w},${h} L0,${h} Z`;
+  const gid = 'evoGrad-' + (data.length || 0);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold`} style={{ color: c.text }}>Dashboard</h2>
-        <p className="text-sm mt-1" style={{ color: c.textMuted }}>Actualizado {ps.lastUpdated ? new Date(ps.lastUpdated + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-      </div>
+    <svg
+      width="100%"
+      height={120}
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      style={{ display: 'block' }}
+    >
+      <defs>
+        <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={c.gold} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={c.gold} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={fillPath} fill={`url(#${gid})`} />
+      <path d={linePath} stroke={c.gold} strokeWidth="2" fill="none" />
+    </svg>
+  );
+}
 
-      {/* ⚠️ ALERTS */}
+function CashflowBars({ data }) {
+  const c = useColors();
+  if (!data || data.length === 0) return null;
+  const max = Math.max(...data.map((d) => d.income));
+  const w = 420;
+  const h = 130;
+  const barW = w / data.length - 6;
+  return (
+    <svg width="100%" viewBox={`0 0 ${w} ${h + 20}`} style={{ display: 'block', maxHeight: 150 }}>
+      {data.map((d, i) => {
+        const bh = max > 0 ? (d.income / max) * h : 0;
+        return (
+          <g key={i}>
+            <rect
+              x={i * (w / data.length) + 3}
+              y={h - bh}
+              width={barW}
+              height={bh}
+              fill={c.green}
+              rx="3"
+              opacity="0.85"
+            />
+            <text
+              x={i * (w / data.length) + 3 + barW / 2}
+              y={h + 14}
+              textAnchor="middle"
+              fontSize="9"
+              fill={c.textMuted}
+            >
+              {d.month}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+export default function Overview({ setPage }) {
+  const {
+    portfolioSummary: ps,
+    categoryAllocation,
+    loans,
+    cashflow,
+    evolution,
+    alerts = [],
+  } = usePortfolio();
+  const c = useColors();
+
+  const iliquido = categoryAllocation
+    .filter((cat) => cat.name === 'PE' || cat.name === 'VC Startups')
+    .reduce((s, cat) => s + cat.invested, 0);
+  const liquidez = categoryAllocation
+    .filter((cat) => ['Fondos Monetarios', 'Renta Fija', 'Criptomonedas'].includes(cat.name))
+    .reduce((s, cat) => s + cat.value, 0);
+  const pctIliquido = ps.totalInvested > 0 ? ((iliquido / ps.totalInvested) * 100).toFixed(1) : '0';
+
+  const upcoming = useMemo(
+    () =>
+      [...loans]
+        .sort((a, b) => {
+          const pa = a.endDate.split('/').reverse().join('');
+          const pb = b.endDate.split('/').reverse().join('');
+          return pa.localeCompare(pb);
+        })
+        .slice(0, 4),
+    [loans]
+  );
+
+  const lastUpdated = new Date(ps.lastUpdated || Date.now()).toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  return (
+    <div className="bc-fade" style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* Header */}
+      <header>
+        <p
+          style={{
+            fontSize: 11,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: c.gold,
+            fontWeight: 500,
+          }}
+        >
+          Resumen
+        </p>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            marginTop: 4,
+          }}
+        >
+          <h1
+            style={{
+              fontSize: 34,
+              fontWeight: 800,
+              letterSpacing: '-0.025em',
+              color: c.text,
+            }}
+          >
+            Dashboard
+          </h1>
+          <p style={{ fontSize: 12, color: c.textMuted }}>Actualizado {lastUpdated}</p>
+        </div>
+      </header>
+
+      {/* Alerts */}
       {alerts.length > 0 && (
-        <div className="space-y-2">
-          {alerts.map((a, i) => {
-            const isUrgent = a.type === 'urgent';
-            const bgColor = isUrgent ? c.redBg : c.amberBg;
-            const borderColor = isUrgent ? c.redBorder : c.amberBorder;
-            const textColor = isUrgent ? c.red : c.amber;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {alerts.slice(0, 2).map((a, i) => {
+            const urgent = a.type === 'urgent' || (a.daysLeft !== undefined && a.daysLeft <= 30);
+            const col = urgent ? c.red : c.amber;
+            const bg = urgent ? c.redBg : c.amberBg;
+            const bd = urgent ? c.redBorder : c.amberBorder;
+            const Ic = urgent ? AlertTriangle : Bell;
             return (
               <button
                 key={i}
                 onClick={() => setPage('loans')}
-                className="w-full rounded-xl p-4 flex items-center gap-3 text-left transition-opacity hover:opacity-80"
-                style={{ background: bgColor, border: `1px solid ${borderColor}` }}
+                style={{
+                  background: bg,
+                  border: `1px solid ${bd}`,
+                  borderRadius: 12,
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                }}
               >
-                {isUrgent ? <AlertTriangle size={18} style={{ color: textColor }} className="shrink-0" /> : <Bell size={18} style={{ color: textColor }} className="shrink-0" />}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: textColor }}>
-                    {a.project} vence en {a.daysLeft} días
-                    <span className="font-normal ml-1" style={{ color: `${textColor}bb` }}>({a.endDate})</span>
+                <Ic size={18} color={col} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: col }}>
+                    {a.project} vence en {a.daysLeft} días{' '}
+                    <span style={{ color: col, opacity: 0.7, fontWeight: 400 }}>
+                      ({a.endDate})
+                    </span>
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: `${textColor}99` }}>{fmt(a.capitalPending)} pendiente de cobro</p>
+                  {a.capitalPending !== undefined && (
+                    <p style={{ fontSize: 11, color: col, opacity: 0.7, marginTop: 2 }}>
+                      {fmt(a.capitalPending)} pendiente de cobro
+                    </p>
+                  )}
                 </div>
-                <ArrowRight size={14} style={{ color: textColor }} className="shrink-0" />
+                <ArrowRight size={14} color={col} />
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Hero KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-5" style={{ background: `linear-gradient(135deg, ${c.goldBg}, ${c.goldBgLight})`, border: `1px solid ${c.goldBorder}` }}>
-          <div className="flex items-center gap-2 mb-3">
-            <Wallet size={16} style={{ color: c.gold }} />
-            <span className="text-xs uppercase font-medium tracking-wider" style={{ color: c.gold }}>Patrimonio</span>
-          </div>
-          <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`} style={{ color: c.text }}>{fmt(ps.totalValue)}</p>
-          <div className="flex items-center gap-1.5 mt-2">
-            {ps.totalReturnPct >= 0 ? <TrendingUp size={14} style={{ color: c.green }} /> : <TrendingDown size={14} style={{ color: c.red }} />}
-            <SemaforoText value={ps.totalReturnPct} c={c} />
-            <span className="text-xs ml-1" style={{ color: c.textMuted }}>({fmt(ps.totalReturn)})</span>
-          </div>
-        </div>
-
-        {[
-          { icon: Target, iconColor: c.green, label: 'Rent. Anual', value: (ps.annualizedReturnPct >= 0 ? '+' : '') + (ps.annualizedReturnPct || 0).toFixed(1) + '%', sub: 'Desde ' + (ps.inceptionDate ? new Date(ps.inceptionDate + 'T00:00:00').getFullYear() : '2024') + ' (CAGR)', valueColor: ps.annualizedReturnPct >= 0 ? c.green : c.red },
-          { icon: Droplets, iconColor: c.cyan, label: 'Liquidez', value: fmt(liquidez), sub: 'RF + Oro + Crypto', valueColor: c.text },
-          { icon: Lock, iconColor: c.amber, label: 'Ilíquido', value: pctIliquido + '%', sub: fmt(peInv + vcInv) + ' en PE + VC', valueColor: c.amber },
-        ].map((kpi) => (
-          <div key={kpi.label} className="rounded-2xl p-5" style={{ background: c.card, border: `1px solid ${c.border}` }}>
-            <div className="flex items-center gap-2 mb-3">
-              <kpi.icon size={16} style={{ color: kpi.iconColor }} />
-              <span className="text-xs uppercase font-medium tracking-wider" style={{ color: c.textSecondary }}>{kpi.label}</span>
-            </div>
-            <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold`} style={{ color: kpi.valueColor }}>{kpi.value}</p>
-            <p className="text-xs mt-2" style={{ color: c.textMuted }}>{kpi.sub}</p>
-          </div>
-        ))}
+      {/* Hero KPI row — split hero + 3 neutral */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1fr 1fr 1fr',
+          gap: 16,
+        }}
+        className="kpi-grid"
+      >
+        <HeroKPI
+          label="Patrimonio total"
+          value={fmt(ps.totalValue)}
+          delta={ps.totalReturnPct}
+          deltaAbs={ps.totalReturn}
+          icon={Wallet}
+        />
+        <KPI
+          label="Rent. anual (CAGR)"
+          value={(ps.annualizedReturnPct >= 0 ? '+' : '') + ps.annualizedReturnPct.toFixed(2) + '%'}
+          sub="Desde ene 2024"
+          icon={Target}
+          iconColor={c.green}
+          valueColor={c.green}
+        />
+        <KPI
+          label="Liquidez"
+          value={fmt(liquidez)}
+          sub="RF + Oro + Crypto"
+          icon={Droplets}
+          iconColor={c.cyan}
+        />
+        <KPI
+          label="Ilíquido"
+          value={pctIliquido + '%'}
+          sub={fmt(iliquido) + ' · PE + VC'}
+          icon={Lock}
+          iconColor={c.amber}
+          valueColor={c.amber}
+        />
       </div>
 
-      {/* 📈 Evolution Chart */}
-      {evolution.length > 2 && (
-        <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
-          <h3 className="text-sm font-semibold mb-4" style={{ color: c.text }}>Evolución del Portfolio</h3>
-          <ResponsiveContainer width="100%" height={isMobile ? 180 : 240}>
-            <AreaChart data={evolution} margin={{ top: 5, right: 5, bottom: 0, left: isMobile ? -20 : 0 }}>
-              <defs>
-                <linearGradient id="gradGold" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={c.gold} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={c.gold} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={`${c.border}`} />
-              <XAxis dataKey="month" tick={{ fill: c.textMuted, fontSize: isMobile ? 9 : 11 }} interval={isMobile ? 4 : 2} />
-              <YAxis tick={{ fill: c.textMuted, fontSize: 10 }} tickFormatter={(v) => (v / 1000).toFixed(0) + 'K'} />
-              <Tooltip content={<ChartTooltip />} />
-              <Area type="monotone" dataKey="invested" name="Invertido" stroke={c.gold} fill="url(#gradGold)" strokeWidth={2} dot={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Evolution chart */}
+      {evolution && evolution.length > 0 && (
+        <Card title="Evolución del portfolio" subtitle="Capital invertido acumulado" pad={24}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-end',
+              marginBottom: 16,
+            }}
+          >
+            <div>
+              <p
+                style={{
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: c.textSecondary,
+                }}
+              >
+                Invertido
+              </p>
+              <p
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: c.text,
+                  fontVariantNumeric: 'tabular-nums',
+                  marginTop: 4,
+                }}
+              >
+                {fmt(ps.totalInvested)}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p
+                style={{
+                  fontSize: 11,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: c.textSecondary,
+                }}
+              >
+                Valor actual
+              </p>
+              <p
+                style={{
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: ps.totalValue >= ps.totalInvested ? c.green : c.red,
+                  fontVariantNumeric: 'tabular-nums',
+                  marginTop: 4,
+                }}
+              >
+                {fmt(ps.totalValue)}
+              </p>
+            </div>
+          </div>
+          <div style={{ width: '100%', marginTop: 8 }}>
+            <EvolutionChart data={evolution} />
+          </div>
+        </Card>
       )}
 
-      {/* 💰 Cashflow + Distribution side by side */}
-      <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6`}>
-        {/* Cashflow Proyectado */}
-        <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
-          <h3 className="text-sm font-semibold mb-1" style={{ color: c.text }}>Cashflow Proyectado</h3>
-          <p className="text-xs mb-4" style={{ color: c.textMuted }}>Ingresos mensuales estimados (12 meses)</p>
-          <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-            <BarChart data={cashflow} margin={{ top: 5, right: 5, bottom: 0, left: isMobile ? -20 : 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={`${c.border}`} />
-              <XAxis dataKey="month" tick={{ fill: c.textMuted, fontSize: isMobile ? 8 : 10 }} interval={isMobile ? 2 : 0} />
-              <YAxis tick={{ fill: c.textMuted, fontSize: 10 }} tickFormatter={(v) => v + '€'} />
-              <Tooltip content={<ChartTooltip />} />
-              <Bar dataKey="income" name="Intereses" fill={c.green} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          {cashflow.length > 0 && (
-            <div className="flex justify-between mt-4 pt-3" style={{ borderTop: `1px solid ${c.border}` }}>
+      {/* Donut + Cashflow */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 20 }} className="two-col">
+        <Card title="Distribución" subtitle="Capital invertido por categoría" pad={24}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
+            <Donut data={categoryAllocation} total={ps.totalInvested} size={200} thickness={24} />
+            <div style={{ flex: 1, minWidth: 180, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {categoryAllocation.map((cat) => {
+                const pct = ((cat.invested / ps.totalInvested) * 100).toFixed(1);
+                return (
+                  <div
+                    key={cat.name}
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}
+                  >
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 2,
+                        background: cat.color,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ color: c.textSecondary, flex: 1 }}>{cat.name}</span>
+                    <span
+                      style={{
+                        color: c.text,
+                        fontWeight: 600,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </Card>
+
+        {cashflow && cashflow.length > 0 && (
+          <Card title="Cashflow proyectado" subtitle="Ingresos mensuales · 12 meses" pad={24}>
+            <CashflowBars data={cashflow} />
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: 16,
+                paddingTop: 14,
+                borderTop: `1px solid ${c.border}`,
+              }}
+            >
               <div>
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>Total 12m</p>
-                <p className="text-sm font-bold mt-0.5" style={{ color: c.green }}>{fmt(cashflow.reduce((s, m) => s + m.income, 0))}</p>
+                <p
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: c.textSecondary,
+                  }}
+                >
+                  Total 12m
+                </p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: c.green,
+                    marginTop: 4,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {fmt(cashflow.reduce((s, m) => s + m.income, 0))}
+                </p>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider" style={{ color: c.textSecondary }}>Media/mes</p>
-                <p className="text-sm font-bold mt-0.5" style={{ color: c.green }}>{fmt(Math.round(cashflow.reduce((s, m) => s + m.income, 0) / 12))}</p>
+              <div style={{ textAlign: 'right' }}>
+                <p
+                  style={{
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: c.textSecondary,
+                  }}
+                >
+                  Media/mes
+                </p>
+                <p
+                  style={{
+                    fontSize: 16,
+                    fontWeight: 700,
+                    color: c.green,
+                    marginTop: 4,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                >
+                  {fmt(cashflow.reduce((s, m) => s + m.income, 0) / 12)}
+                </p>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Distribution Pie */}
-        <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
-          <h3 className="text-sm font-semibold mb-4" style={{ color: c.text }}>Distribución</h3>
-          <ResponsiveContainer width="100%" height={isMobile ? 180 : 220}>
-            <PieChart>
-              <Pie data={categoryAllocation} cx="50%" cy="50%" innerRadius={isMobile ? 45 : 55} outerRadius={isMobile ? 75 : 90} dataKey="invested" stroke="none" paddingAngle={2}>
-                {categoryAllocation.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Tooltip content={<PieTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="grid grid-cols-2 gap-2 mt-4">
-            {categoryAllocation.map((cat) => (
-              <div key={cat.name} className="flex items-center gap-2 text-xs">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ background: cat.color }} />
-                <span className="truncate" style={{ color: c.textSecondary }}>{cat.name}</span>
-                <span className="ml-auto" style={{ color: c.textMuted }}>{ps.totalInvested ? ((cat.invested / ps.totalInvested) * 100).toFixed(0) : 0}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
+          </Card>
+        )}
       </div>
 
       {/* Upcoming maturities */}
-      <div className="rounded-2xl p-6" style={{ background: c.card, border: `1px solid ${c.border}` }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Calendar size={16} style={{ color: c.gold }} />
-          <h3 className="text-sm font-semibold" style={{ color: c.text }}>Próximos Vencimientos</h3>
-        </div>
-        <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-2 gap-x-8 gap-y-4'}`}>
-          {upcomingLoans.map((l) => {
-            const progress = l.cuotasPagadas / (l.cuotasPagadas + l.cuotasRestantes);
+      <Card
+        title="Próximos vencimientos"
+        subtitle="4 préstamos más próximos a vencer"
+        pad={24}
+        action={
+          <button
+            onClick={() => setPage('loans')}
+            style={{
+              background: 'transparent',
+              border: `1px solid ${c.border}`,
+              borderRadius: 8,
+              padding: '6px 12px',
+              fontSize: 11,
+              color: c.textSecondary,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: 'inherit',
+            }}
+          >
+            Ver todos <ChevronRight size={12} />
+          </button>
+        }
+      >
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '20px 32px',
+          }}
+          className="two-col"
+        >
+          {upcoming.map((l) => {
+            const totalCuotas = l.cuotasPagadas + l.cuotasRestantes;
+            const pct = (l.cuotasPagadas / totalCuotas) * 100;
             return (
               <div key={l.id}>
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-sm font-medium" style={{ color: c.text }}>{l.project}</span>
-                  <span className="text-xs" style={{ color: c.textMuted }}>{l.endDate}</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: 6,
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 500, color: c.text }}>
+                    {l.project}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: c.textMuted,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {l.endDate}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-xs" style={{ color: c.textSecondary }}>{fmt(l.capitalPending)} pendiente</span>
-                  <span className="text-xs" style={{ color: c.green }}>{(progress * 100).toFixed(0)}% amortizado</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: 6,
+                    fontSize: 11,
+                  }}
+                >
+                  <span
+                    style={{ color: c.textSecondary, fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {fmt(l.capitalPending)} pendiente
+                  </span>
+                  <span style={{ color: c.green, fontVariantNumeric: 'tabular-nums' }}>
+                    {pct.toFixed(0)}% amortizado
+                  </span>
                 </div>
-                <ProgressBar value={l.cuotasPagadas} max={l.cuotasPagadas + l.cuotasRestantes} color={c.purple} c={c} />
+                <ProgressBar
+                  value={l.cuotasPagadas}
+                  max={totalCuotas}
+                  color={c.purple}
+                  height={5}
+                />
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
-      {/* Category Cards */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4" style={{ color: c.text }}>Por Categoría</h3>
-        <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2 xl:grid-cols-3'} gap-4`}>
-          {categories.map((cat) => {
-            const pct = ps.totalInvested > 0 ? ((cat.invested / ps.totalInvested) * 100).toFixed(1) : '0';
-            const ret = cat.return ?? 0;
+      {/* Category cards */}
+      <section>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'baseline',
+            marginBottom: 14,
+          }}
+        >
+          <h3
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              color: c.text,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Por categoría
+          </h3>
+          <p style={{ fontSize: 11, color: c.textMuted }}>
+            7 categorías · {fmt(ps.totalInvested)} total
+          </p>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: 14,
+          }}
+          className="cat-grid"
+        >
+          {categoryAllocation.map((cat) => {
+            const pct = ((cat.invested / ps.totalInvested) * 100).toFixed(1);
+            const ret = cat.return;
+            const Ic = iconFor[cat.name];
+            const illiquid = cat.name === 'PE' || cat.name === 'VC Startups';
             return (
-              <button
-                key={cat.id}
-                onClick={() => setPage(cat.id)}
-                className="rounded-2xl p-5 text-left transition-all group"
-                style={{ background: c.card, border: `1px solid ${c.border}` }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.borderHover; e.currentTarget.style.background = c.cardHover; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.card; }}
+              <Card
+                key={cat.name}
+                pad={18}
+                hover
+                onClick={() => setPage(pageFor[cat.name])}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{cat.icon}</span>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: 14,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
+                        background: cat.color + '22',
+                        color: cat.color,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {Ic && <Ic size={17} />}
+                    </div>
                     <div>
-                      <h4 className="text-sm font-semibold" style={{ color: c.text }}>{cat.name}</h4>
-                      <p className="text-[10px] mt-0.5" style={{ color: c.textMuted }}>{cat.detail}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: c.text }}>
+                        {cat.name}
+                      </p>
+                      <p style={{ fontSize: 10, color: c.textMuted, marginTop: 1 }}>
+                        {pct}% del portfolio
+                      </p>
                     </div>
                   </div>
-                  <ArrowRight size={16} className="mt-1 transition-colors" style={{ color: c.textMuted }} />
+                  <ArrowRight size={14} color={c.textMuted} />
                 </div>
-                <div className="flex items-end justify-between mt-4">
-                  <div>
-                    <p className="text-lg font-bold" style={{ color: c.text }}>{fmt(cat.invested)}</p>
-                    <p className="text-xs" style={{ color: c.textMuted }}>{pct}% del portfolio</p>
-                  </div>
-                  <div className="text-right">
-                    {cat.highlight
-                      ? <p className="text-sm font-medium" style={{ color: cat.highlightColor }}>{cat.highlight}</p>
-                      : <SemaforoText value={ret} c={c} />
-                    }
-                  </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    marginBottom: 10,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: c.text,
+                      fontVariantNumeric: 'tabular-nums',
+                      letterSpacing: '-0.01em',
+                    }}
+                  >
+                    {fmt(cat.invested)}
+                  </span>
+                  {illiquid ? (
+                    <Badge color={c.amber} bg={c.amberBg} border={c.amberBorder}>
+                      Ilíquido
+                    </Badge>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: ret >= 0 ? c.green : c.red,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {(ret >= 0 ? '+' : '') + ret.toFixed(2) + '%'}
+                    </span>
+                  )}
                 </div>
-                <div className="mt-3">
-                  <ProgressBar value={cat.invested} max={ps.totalInvested} color={cat.color} c={c} />
-                </div>
-              </button>
+                <ProgressBar
+                  value={cat.invested}
+                  max={ps.totalInvested}
+                  color={cat.color}
+                  height={4}
+                />
+              </Card>
             );
           })}
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-xl p-4 text-xs" style={{ background: c.amberBg, border: `1px solid ${c.amberBorder}`, color: c.amber }}>
-        💡 PE y VC: solo capital invertido en totales. Múltiplos no realizados como referencia en sus páginas.
+      {/* Footer note */}
+      <div
+        style={{
+          padding: '14px 16px',
+          background: c.amberBg,
+          border: `1px solid ${c.amberBorder}`,
+          borderRadius: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          fontSize: 12,
+          color: c.amber,
+        }}
+      >
+        <AlertTriangle size={14} color={c.amber} />
+        PE y VC: solo capital invertido en totales. Múltiplos no realizados como referencia en sus páginas.
       </div>
     </div>
   );
