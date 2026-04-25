@@ -57,18 +57,31 @@ export function computeRECalc(p) {
   };
 }
 
+// Quotes within this many days are considered "fresh" enough to drive the
+// current value of a position. Beyond that we fall back to the latest
+// valuation (or invested) — avoids stale prices silently dominating the UI.
+const QUOTE_FRESHNESS_DAYS = 7;
+
 export async function buildShape() {
-  const [a, t, v, s] = await Promise.all([
+  const [a, t, v, s, q] = await Promise.all([
     pool.query("select * from assets where status = 'active'"),
     pool.query("select asset_id, type, date::text, amount, metadata from transactions"),
     pool.query("select asset_id, date::text, value from valuations"),
     pool.query("select asset_id, payment_no, scheduled_principal, scheduled_interest, paid_principal, paid_interest, status from loan_schedules"),
+    pool.query(
+      `select distinct on (asset_id) asset_id, date::text, price, source
+       from quotes
+       where date >= current_date - $1::int
+       order by asset_id, date desc`,
+      [QUOTE_FRESHNESS_DAYS],
+    ),
   ]);
 
   const assets = a.rows;
   const transactions = t.rows;
   const valuations = v.rows;
   const schedules = s.rows;
+  const quotes = q.rows;
 
   const txByAsset = new Map();
   for (const tx of transactions) {
@@ -86,12 +99,31 @@ export async function buildShape() {
     schedByAsset.get(sc.asset_id).push(sc);
   }
 
+  const quoteByAsset = new Map();
+  for (const qr of quotes) quoteByAsset.set(qr.asset_id, qr);
+
   const investedOf = (id) => (txByAsset.get(id) || [])
     .filter((x) => x.type === 'contribution' || x.type === 'buy')
     .filter((x) => !(x.metadata && x.metadata.kind === 'mortgage'))
     .reduce((sum, x) => sum + Number(x.amount), 0);
-  const currentOf = (id, fallback) => {
-    const val = valByAsset.get(id);
+
+  // Liquid positions (currently crypto only) prefer a fresh market quote over
+  // the stored valuation. ETF/monetary use 'manual' quote_source today so
+  // they keep going through valuations.
+  const unitsFor = (ast) => {
+    const m = ast.metadata || {};
+    if (ast.category === 'crypto') return Number(m.amount) || 0;
+    if (ast.category === 'etf_fund') return Number(m.shares) || 0;
+    if (ast.category === 'monetary') return Number(m.units) || 0;
+    return 0;
+  };
+  const currentOf = (ast, fallback) => {
+    const qr = quoteByAsset.get(ast.id);
+    if (qr && ast.quote_source && ast.quote_source !== 'manual') {
+      const units = unitsFor(ast);
+      if (units > 0) return units * Number(qr.price);
+    }
+    const val = valByAsset.get(ast.id);
     return val ? Number(val.value) : fallback;
   };
 
@@ -101,7 +133,7 @@ export async function buildShape() {
   for (const ast of assets) {
     const meta = ast.metadata || {};
     const invested = investedOf(ast.id);
-    const current = currentOf(ast.id, invested);
+    const current = currentOf(ast, invested);
     const returnPct = invested ? round2(((current / invested) - 1) * 100) : 0;
 
     if (ast.category === 'etf_fund') {
