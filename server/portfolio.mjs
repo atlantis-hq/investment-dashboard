@@ -271,10 +271,21 @@ export async function buildShape() {
     };
   })();
 
-  const { computeCashflow, computeEvolutionFromDB, computeAlerts } = await import('./compute.mjs');
+  const { computeCashflow, computeEvolutionFromDB, computeAlerts, computeReturns } = await import('./compute.mjs');
   const cashflow = computeCashflow({ loans, rentaFija });
   const evolution = await computeEvolutionFromDB();
   const alerts = computeAlerts({ loans });
+
+  const partialShape = {
+    etfsFunds, monetaryFunds, crypto, rentaFija, loans, privateEquity, vcStartups,
+    realEstate: { properties: reProps, summary: reSummary },
+  };
+  const returns = await computeReturns(partialShape);
+  const categoryAllocationWithXirr = categoryAllocation.map((c) => ({
+    ...c,
+    xirrPct: returns.categoryXirrPct[c.key] ?? null,
+    holdYears: returns.categoryHoldYears[c.key] ?? null,
+  }));
 
   return {
     portfolioSummary: {
@@ -283,10 +294,13 @@ export async function buildShape() {
       totalReturn: round2(totalValue - totalInvested),
       totalReturnPct: totalInvested ? round2(((totalValue / totalInvested) - 1) * 100) : 0,
       annualizedReturnPct,
+      xirrPct: returns.portfolioXirrPct,
+      holdYears: returns.portfolioHoldYears,
+      netLiquidation: returns.netLiquidation,
       inceptionDate: earliest,
       lastUpdated: new Date().toISOString().slice(0, 10),
     },
-    categoryAllocation,
+    categoryAllocation: categoryAllocationWithXirr,
     etfsFunds, monetaryFunds, crypto, rentaFija, loans, privateEquity, vcStartups,
     realEstate: { properties: reProps, summary: reSummary },
     cashflow,
