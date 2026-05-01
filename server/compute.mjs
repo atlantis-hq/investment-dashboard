@@ -23,6 +23,9 @@ export function computeCashflow({ loans, rentaFija }) {
     let income = 0;
     let principal = 0;
     for (const l of loans) {
+      if (l.frozen) continue;
+      if (l.bulletPayment) continue;
+      if (l.paysMonthly === false) continue;
       const start = parseESDate(l.startDate);
       const end = parseESDate(l.endDate);
       if (!start || !end) continue;
@@ -181,6 +184,8 @@ async function loadCashflows() {
     let signed = 0;
     if ((r.type === 'contribution' || r.type === 'buy') && !isMortgage) signed = -amount;
     else if (r.type === 'interest_payment' || r.type === 'principal_payment') signed = +amount;
+    else if (r.type === 'rent_received' || r.type === 'distribution' || r.type === 'dividend') signed = +amount;
+    else if (r.type === 'expense' || r.type === 'mortgage_payment') signed = -amount;
     else continue;
     flows.push({ date, amount: signed, assetId: r.asset_id, name: r.name, category: r.category });
   }
