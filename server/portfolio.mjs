@@ -271,6 +271,11 @@ export async function buildShape() {
     };
   })();
 
+  const { computeCashflow, computeEvolutionFromDB, computeAlerts } = await import('./compute.mjs');
+  const cashflow = computeCashflow({ loans, rentaFija });
+  const evolution = await computeEvolutionFromDB();
+  const alerts = computeAlerts({ loans });
+
   return {
     portfolioSummary: {
       totalValue: round2(totalValue),
@@ -284,6 +289,9 @@ export async function buildShape() {
     categoryAllocation,
     etfsFunds, monetaryFunds, crypto, rentaFija, loans, privateEquity, vcStartups,
     realEstate: { properties: reProps, summary: reSummary },
+    cashflow,
+    evolution,
+    alerts,
     loansSummary: {
       totalCapital: round2(loans.reduce((sum, l) => sum + l.capital, 0)),
       totalInterestEarned: round2(loans.reduce((sum, l) => sum + l.interestEarned, 0)),

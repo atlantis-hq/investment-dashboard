@@ -53,10 +53,20 @@ export function PortfolioProvider({ children }) {
 
   const base = useMemo(() => remote ?? buildFromFallback(), [remote]);
 
-  // Computed views stay in the frontend (cheap, depend on base data shape).
-  const cashflow = useMemo(() => fallback.computeCashflow(), [base]);
-  const evolution = useMemo(() => fallback.computeEvolution(), [base]);
-  const alerts = useMemo(() => fallback.computeAlerts(), [base]);
+  // Server ships cashflow/evolution/alerts in the payload. Fall back to the
+  // local computation only if the API is unreachable.
+  const cashflow = useMemo(
+    () => base.cashflow ?? fallback.computeCashflow(),
+    [base],
+  );
+  const evolution = useMemo(
+    () => base.evolution ?? fallback.computeEvolution(),
+    [base],
+  );
+  const alerts = useMemo(
+    () => base.alerts ?? fallback.computeAlerts(),
+    [base],
+  );
 
   const value = {
     ...base,
