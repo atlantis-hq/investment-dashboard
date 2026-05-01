@@ -1,146 +1,145 @@
 # Investment Dashboard — Progress (sesión 2026-05-01)
 
-Documento de continuidad por si la sesión cae. Refleja estado real al 2026-05-01.
+Documento de continuidad por si la sesión cae. Refleja estado real al final
+de la sesión 2026-05-01.
 
 ## Resumen ejecutivo
 
-Sesión larga reorientando el dashboard hacia métricas honestas (XIRR, equity-pure)
-y limpiando la data (fechas reales, valuaciones, frozen loans, nuevas inversiones).
-Backend listo, falta cerrar frontend (chart dual + headline nuevo).
+Sesión completa de redesign de métricas (XIRR, equity-pure framing, dual-line
+evolution chart) + limpieza profunda de data: nuevas inversiones, fechas reales,
+loans paralizados, valuaciones intermedias para PE.
+
+Backend, frontend y data lista. Dev server corriendo accesible vía Tailscale.
+
+## Para ver el resultado
+
+Dev server con proxy al API local:
+
+```
+http://mac-mini-de-reiser.tail9ede59.ts.net:5173
+```
+
+(Cualquier equipo en tu Tailnet — desktop, móvil, etc.)
 
 ## Decisiones de visualización (definidas con el usuario)
 
-1. **Headline**: ganancia en € + XIRR/año, con totalReturnPct entre paréntesis abajo.
-2. **XIRR siempre visible** aunque dé valores feos (-99% para holds cortos). Mostrar
-   también `holdYears` para que el lector contextualice.
-3. **Equity-pure framing**: totalInvested y totalValue reflejan cash de bolsillo
-   (mortgages excluidas). Se exponen `grossAssetValue` y `mortgageDebt` aparte.
-4. **Evolution chart**: dos líneas (invested + value), gap = ganancia acumulada.
-5. **Histórico de valor**: usuario va metiendo valuaciones a la tabla `valuations`
-   manualmente. Loans tienen histórico real de la DB. Resto: si no hay valuation,
-   value = invested.
+1. **Headline**: `GainHero` con "Ganancia +€" y "Rent. anualizada XIRR/año"
+   en paralelo. Below the fold: total invertido / valor actual / activos brutos
+   / deuda hipotecaria.
+2. **XIRR siempre visible** (incluso valores feos). `holdYears` contextualiza.
+3. **Equity-pure framing**: totalInvested y totalValue son cash de bolsillo
+   (mortgages excluidas). `grossAssetValue` y `mortgageDebt` aparte.
+4. **Evolution chart**: dos líneas — invested (gris dashed) + value (verde).
+   Área shaded entre ellas = ganancia acumulada visible.
+5. **Histórico de valor**: `valuations` table es la fuente. Loans con histórico
+   real (DB). Quotes table reflejada para current month (BTC live, etc.).
 
-## Lo que se ha hecho (commiteado, sin pushear)
+## Lo que está hecho (commiteado, sin pushear)
 
 ```
+8dfb515 feat(frontend): equity-pure headline + dual-line evolution chart
+bddede6 feat(backend): dual-line evolution + realized income in totals
 e093142 feat(backend): equity-pure framing for portfolio totals
 cd6f467 feat(backend): support frozen/bullet loans + rental income in cashflows
 af931af feat(backend): money-weighted return (XIRR) per portfolio and category
 db8b4d4 feat(backend): move cashflow/evolution/alerts compute to server
-9f727ab feat(backend): daily quote fetcher + live BTC valuation
-1f1d4df feat(backend): daily portfolio snapshots + extract domain layer
-73dbdd4 feat(ops): daily pg_dump backup with 30-day rotation
-3bc881e feat(frontend): wire dashboard to live API with static fallback
-9030674 feat(backend): self-hosted Postgres API on Mac mini
-+ 4 commits redesign frontend pre-pivot
++ commits previos: snapshot daemon, pg_dump backup, frontend wiring,
+  self-hosted Postgres API, redesign frontend
 ```
 
-13 commits ahead de origin/main. Sin pushear todavía (gh auth pendiente).
+14 commits ahead de origin/main. Sin pushear (gh auth bloqueado).
 
 ### Cambios de data en DB
 
-- **Fechas corregidas**: BTC (2025-10-01), Oro (2026-01-01), pisos (Gijón 2025-10-01,
-  Vitoria 2026-03-01, Pabellón 2025-05-01).
-- **Pabellón pagado entero**: financing.cash=true, loan eliminado, equity=1.32M.
-- **Habitalia #21 paralizado**: cuotas 8-10 revertidas a default, tx de
-  interest/principal payments correspondientes borradas, asset marcado frozen.
-- **FutureChat eliminado**: no se invirtió finalmente.
-- **Rebel Tickets**: rewrite con dos tickets (15K @ 900K val abr-2023, 60K @ 2.5M
-  val dic-2024), valuation actual 122K (4.07% de 3M).
-- **Habitalia (PE)**: tx date corregida a oct-2024, valuation 2024-10-01=180K
-  añadida.
-- **Enzo Ventures**: markup eliminado, valuation = invested = 100K.
-- **Revolut**: 70K → 100K.
-- **Nuevos**:
-  - Trade Republic Renta Fija 30K @ 2.1% TAE (2026-03-31)
-  - Indexa Capital 150K @ 3.5% esperado (2026-02-01)
-  - Indexa Capital (6% esperado) 30K (2026-04-01)
-  - Préstamo Inmobiliario privado 45K @ 20% / 18m (2024-12-01) — frozen
-  - Préstamo Cárnico 25K @ 15% / 12m mensual (2026-03-01)
-  - SpaceX IPO Loan 50K @ 25% / 18m bullet (2026-04-01)
-  - Inmuebles Potes 500K, fully paid, rent 15K/año netos desde 2025
-    (purchase date placeholder 2015-01-01, rent backfilleado 2025+2026 partial)
+**Fechas corregidas**:
+- BTC: 2025-10-01
+- Oro físico: 2026-01-01 (5 onzas, 70K) + 2025-12-01 (1 onza más, 13.1K) → 6 unidades 83.1K total
+- Pisos: Gijón 2025-10-01 / Vitoria 2026-03-01 / Pabellón 2025-05-01
+
+**Estructura RE**:
+- Pabellón pagado entero (cash, sin hipoteca) → equity 1.32M, loan 0
+- Inmuebles Potes (placeholder 2015-01-01, valor 500K, fully paid, 15K/año netos)
+  - Renta backfilleada solo desde 2025
+- Real Estate valuations insertadas a 2026-05-01 con currentValue de cada uno
+  (para que la línea de chart pinte uniformemente)
+
+**Loans**:
+- Habitalia #21 (45K @ 9%) **paralizado** desde Diciembre 2025 — cuotas 8-10
+  revertidas a 'default', txs de interest/principal correspondientes borradas,
+  metadata.frozen=true
+- **Préstamo Inmobiliario privado** 45K @ 20% / 18m — frozen desde compra (2024-12-01)
+- **Préstamo Cárnico** 25K @ 15% / 12m mensual (2026-03-01)
+- **SpaceX IPO Loan** 50K @ 25% / 18m bullet (2026-04-01)
+
+**ETF/Fondos**:
+- **Indexa Capital** 150K @ 3.5% esperado (2026-02-01)
+- **Indexa Capital (6%)** 30K @ 6% esperado (2026-04-01)
+
+**Renta Fija**:
+- **Revolut** 70K → 100K (corrección, mismo start 2026-01-20)
+- **Trade Republic Renta Fija** 30K @ 2.1% TAE (2026-03-31)
+
+**PE/VC**:
+- **FutureChat eliminado** (no se invirtió finalmente)
+- **Rebel Tickets** rewrite: tickets 15K (abr-2023 @ 900K val) + 60K (dic-2024 @ 2.5M val), valuation actual 122K
+- **Habitalia** (PE): tx date corregida a 2024-10-01, valuation inicial 180K añadida
+- **Enzo Ventures**: markup eliminado, valuation = invested = 100K
 
 ### Cambios de código
 
-- `server/compute.mjs`:
-  - `computeCashflow/computeEvolutionFromDB/computeAlerts` (movidos del fallback frontend)
-  - `computeReturns()` con XIRR Newton-Raphson + bisección sobre [-0.9999, 10]
-  - Soporte para `rent_received`, `distribution`, `dividend` (positivos),
-    `expense`, `mortgage_payment` (negativos)
-  - cashflow projection skipea loans `frozen`, `bulletPayment`, o `paysMonthly === false`
-- `server/portfolio.mjs`:
-  - `loans[]` expone `frozen`, `frozenSince`, `paysMonthly`, `bulletPayment`,
-    status='Paralizado' si frozen
-  - Buckets en equity-pure: loan = capital + interestEarned, RE = equity neto
-  - `portfolioSummary` añade `xirrPct`, `holdYears`, `grossAssetValue`,
-    `mortgageDebt`
-  - `categoryAllocation[]` añade `xirrPct` y `holdYears`
+#### `server/compute.mjs`
+- `computeCashflow`/`computeEvolutionDualFromDB`/`computeAlerts` (compute al server)
+- `computeReturns()` con XIRR Newton-Raphson + bisección [-0.9999, 10]
+- `loadCashflows`: `rent_received`, `distribution`, `dividend` como positivos;
+  `expense`, `mortgage_payment` como negativos
+- Cashflow projection skipea `frozen`, `bulletPayment`, `paysMonthly === false`
+- Evolution dual respeta quotes table en mes actual (BTC live)
+
+#### `server/portfolio.mjs`
+- `loans[]`: añade `frozen`, `frozenSince`, `paysMonthly`, `bulletPayment`,
+  status='Paralizado' cuando frozen
+- Buckets equity-pure: loan=capital+interestEarned, RE=equity neto+rent
+- `realizedIncomeByAsset` agregado a current values de cada asset (rent/dividend)
+- `portfolioSummary` incluye `xirrPct`, `holdYears`, `grossAssetValue`, `mortgageDebt`
+- `categoryAllocation[]` añade `xirrPct` y `holdYears`
+
+#### `src/pages/Overview.jsx`
+- `GainHero` reemplaza HeroKPI: ganancia €/XIRR%/año en paralelo + secondary metrics
+- `EvolutionChart` con 2 paths (invested dashed + value sólido) + área verde gap
+- KPI grid reducido a 2 cols (Liquidez + Ilíquido). CAGR retirado.
+
+#### `vite.config.js`
+- Dev server con proxy `/api/portfolio` → `127.0.0.1:8443/portfolio` con bearer
+  inyectado desde `API_TOKEN` env. `host: 0.0.0.0` permite acceso vía Tailscale.
+
+#### `src/data/portfolio.js`
+- `computeEvolution()` fallback ahora devuelve `{month, invested, value}` con
+  value=invested (sin histórico mock).
 
 ## Lo que queda
 
-Tareas pendientes (en orden de prioridad para que el usuario "vea cómo está"):
+### Bloqueado en input externo
+- `gh auth login --web` para pushear los 14 commits a GitHub
+- `METALS_API_KEY` para oro live (quotes.mjs lo skippea hoy)
+- Decisión Potes: 2015-01-01 (now) vs 2024-01-01 (would change XIRR portfolio
+  from 5.37% to ~26%)
+- Datos reales de RE intermedios (tasaciones por propiedad)
 
-### 1. Backend — evolution con dos líneas (#6) [pendiente]
-
-Construir histórico mensual `[{month, invested, value}]`:
-- `invested` = ya está hecho en `computeEvolutionFromDB`, cumulative equity-pure
-- `value` por mes:
-  - Loans: capital + sum(interest_payment hasta ese mes)
-  - Otros assets con valuation: latest valuation hasta ese mes
-  - Otros sin valuation: invested (cost basis)
-  - RE: gross currentValue - financing.loan (aproximación)
-
-Entregable: nueva función `computeEvolutionDualFromDB()` que reemplace la actual
-y devuelva `{month, invested, value}`. Update `buildShape` y el fallback en
-`src/data/portfolio.js` (versión mock de la nueva shape).
-
-### 2. Frontend — nuevo headline (#7) [pendiente]
-
-`src/pages/Overview.jsx` y `OverviewMobile.jsx`. Formato elegido por usuario:
-
-```
-+535.898 €      +5,37%/año
-(+16,12% total) (XIRR)
-
-Total invertido: 3.324.434 €
-Valor actual:    3.860.332 €
-
-Deuda hipotecaria:    149.500 € (-)
-Activos brutos:     4.009.832 €
-```
-
-Datos disponibles en `usePortfolio()`: `portfolioSummary.totalReturn`,
-`xirrPct`, `holdYears`, `totalReturnPct`, `totalInvested`, `totalValue`,
-`grossAssetValue`, `mortgageDebt`.
-
-### 3. Frontend — EvolutionChart dual line (#8) [pendiente]
-
-Componente `EvolutionChart` (probablemente en `src/components/`) pasa de una
-línea a dos: `invested` (azul) y `value` (verde). Gap = ganancia visual.
-
-### 4. Polish — pendiente discutir
-
-- Per-asset XIRR (¿mostrar XIRR por loan/property/holding individual?)
-- Ordenación de categorías (por valor / return / nombre / ...)
+### Polish opcional pendiente
+- Per-asset XIRR (¿por loan/property/holding individual o solo categoría?)
+- Ordenación de categorías (valor / return / nombre)
 - Time period selectors (YTD, 1Y, since-inception)
-- Oro como categoría propia (no "monetary"?)
-- Decisión final sobre Potes 2015 vs 2024 (afecta XIRR portfolio: 5,37% vs ~26%)
+- Oro como categoría propia (no "monetary")
+- OverviewMobile.jsx: replicar GainHero + chart dual (no actualizado todavía)
+- Indicar visualmente loans frozen (Habitalia #21, RE privado) en la lista de loans
 
-### Bloqueado en input externo (no autónomo)
-
-- `gh auth login --web` para pushear los 13 commits a GitHub
-- `METALS_API_KEY` para oro físico live (hoy quotes.mjs lo skippea)
-- Datos reales de RE intermedios (valuaciones tasaciones por propiedad)
-- Datos crypto/oro: avgPrice histórico real (no afecta valor actual pero sí XIRR)
-
-## Estado live actual (2026-05-01)
+## Estado live actual (2026-05-01, equity-pure)
 
 ```
 Portfolio
   Total invertido:  3.324.434 €  (equity-pure)
-  Valor actual:     3.860.332 €  (net liquidation)
-  Total return:     +535.898 €   (+16,12%)
+  Valor actual:     3.880.332 €  (net liq + realized income)
+  Ganancia:         +535.898 €   (+16,72%)
   XIRR:             +5,37% / año (sobre 11,33y, dominado por Potes 2015)
 
   Activos brutos:   4.009.832 €
@@ -150,11 +149,11 @@ Categorías:
   ETF/Fondos    +15,34%   xirr +13,03%  (Gestivalue + 2x Indexa)
   Monetary       -7,06%   xirr -19,21%  (Oro 6 onzas)
   Crypto        -13,19%   xirr -21,59%  (BTC 1.04)
-  Renta Fija     +0,52%   xirr +2,26%   (Revolut + Trade Republic)
-  Loans          +5,18%   xirr +7,94%   (21 Habitalia + 3 alternativos)
+  Renta Fija     +0,52%   xirr +2,26%   (Revolut 100K + Trade Republic 30K)
+  Loans          +5,18%   xirr +7,94%   (21 Habitalia + Cárnico + RE-priv + SpaceX)
   PE           +222,35%   xirr +99,5%   (Habitalia + Rebel Tickets)
   VC              0%      xirr 0%       (Coben + Enzo, sin markup)
-  Real Estate    -4,15%   xirr -0,91%   (Gijón + Vitoria + Pabellón + Potes)
+  Real Estate    -3,86%   xirr -0,91%   (Gijón + Vitoria + Pabellón + Potes)
 ```
 
 ## Comandos útiles
@@ -173,6 +172,12 @@ node -e "import('./server/portfolio.mjs').then(async m => {
 # Bypass Vercel CDN
 curl "https://dashboard.bentorcapital.com/api/portfolio?bust=$(date +%s)" | python3 -m json.tool
 
+# Dev server local (para preview sin pushear)
+npm run dev   # → http://mac-mini-de-reiser.tail9ede59.ts.net:5173
+
+# Test proxy local
+curl http://localhost:5173/api/portfolio | python3 -m json.tool
+
 # Daemons bentor
 launchctl list | grep bentor
 
@@ -187,3 +192,11 @@ gh auth login --hostname github.com --git-protocol https --web
 gh auth setup-git
 git push origin main
 ```
+
+## Próximos pasos (post-push)
+
+Una vez pushees, Vercel auto-deployará el frontend y `dashboard.bentorcapital.com`
+mostrará el nuevo headline + chart dual. El backend ya está live.
+
+Después podemos seguir con polish: per-asset XIRR, time selectors, mobile,
+decisión final sobre Potes 2015 vs 2024, etc.
