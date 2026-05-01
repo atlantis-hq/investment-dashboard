@@ -227,18 +227,28 @@ export async function buildShape() {
     }
   }
 
+  // Equity-pure framing: investor's actual cash in vs net liquidation today.
+  // Loans: current = capital + interestEarned (already-received interest is a
+  //   realized return; principal returned offsets capital, so current ≈ capital
+  //   when nothing has defaulted, plus interest earned).
+  // Real estate: invested = equity put in (excludes mortgage); current = gross
+  //   value minus outstanding mortgage (≈ financing.loan, no amortization
+  //   tracking yet).
   const buckets = [
     ['etf_fund', etfsFunds],
     ['monetary', monetaryFunds],
     ['crypto', crypto],
     ['fixed_income', rentaFija.map((r) => ({ invested: r.capital, current: r.currentValue }))],
-    ['loan', loans.map((l) => ({ invested: l.capital, current: l.capital }))],
+    ['loan', loans.map((l) => ({ invested: l.capital, current: l.capital + l.interestEarned }))],
     ['pe', privateEquity],
     ['vc', vcStartups],
-    ['real_estate', reProps.map((r) => ({
-      invested: r.purchase.price + r.purchase.fees,
-      current: r.purchase.currentValue,
-    }))],
+    ['real_estate', reProps.map((r) => {
+      const debt = r.financing.cash ? 0 : Number(r.financing.loan) || 0;
+      return {
+        invested: r.calc.equityInvested,
+        current: Number(r.purchase.currentValue) - debt,
+      };
+    })],
   ];
   const categoryAllocation = buckets.map(([cat, items]) => {
     const invested = items.reduce((sum, i) => sum + (Number(i.invested) || 0), 0);
@@ -253,6 +263,21 @@ export async function buildShape() {
 
   const totalInvested = categoryAllocation.reduce((sum, c) => sum + c.invested, 0);
   const totalValue = categoryAllocation.reduce((sum, c) => sum + c.value, 0);
+
+  // Side info for the headline: gross asset exposure and outstanding mortgage.
+  const grossAssetValue = round2(
+    etfsFunds.reduce((s, x) => s + Number(x.current), 0) +
+    monetaryFunds.reduce((s, x) => s + Number(x.current), 0) +
+    crypto.reduce((s, x) => s + Number(x.current), 0) +
+    rentaFija.reduce((s, x) => s + Number(x.currentValue), 0) +
+    loans.reduce((s, x) => s + Number(x.capital) + Number(x.interestEarned), 0) +
+    privateEquity.reduce((s, x) => s + Number(x.currentValue), 0) +
+    vcStartups.reduce((s, x) => s + Number(x.currentValue), 0) +
+    reProps.reduce((s, p) => s + Number(p.purchase.currentValue), 0)
+  );
+  const mortgageDebt = round2(
+    reProps.reduce((s, p) => s + (p.financing.cash ? 0 : Number(p.financing.loan) || 0), 0)
+  );
 
   const earliest = transactions.map((x) => x.date).filter(Boolean).sort()[0] || '2024-01-01';
   const years = (Date.now() - new Date(earliest).getTime()) / (365.25 * 24 * 3600 * 1000);
@@ -301,6 +326,8 @@ export async function buildShape() {
       xirrPct: returns.portfolioXirrPct,
       holdYears: returns.portfolioHoldYears,
       netLiquidation: returns.netLiquidation,
+      grossAssetValue,
+      mortgageDebt,
       inceptionDate: earliest,
       lastUpdated: new Date().toISOString().slice(0, 10),
     },
