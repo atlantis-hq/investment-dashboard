@@ -55,41 +55,164 @@ export function computeCashflow({ loans, rentaFija }) {
   return months;
 }
 
-// Reads transactions directly from the DB so evolution reflects the real
-// ledger (vs. the fallback that hardcodes 2024-01-01 for PE/VC/crypto).
-// Includes mortgage contributions so the line's tail matches the headline
-// totalInvested (which uses full acquisition cost for real estate).
-export async function computeEvolutionFromDB() {
-  const res = await pool.query(`
-    select date::text as date, amount
-    from transactions
-    where type in ('contribution', 'buy')
-    order by date asc
-  `);
-  const events = res.rows.map((r) => ({
-    date: new Date(r.date),
-    amount: Number(r.amount),
-  }));
-  if (events.length === 0) return [];
+// Builds month-by-month timeline with two lines: cumulative equity invested
+// and net liquidation value. Reads from real ledger so it reflects:
+//   - actual contribution dates per asset (not portfolio inception)
+//   - mortgage contributions excluded from invested (equity-pure)
+//   - loan interest accrual reflected in value
+//   - rent / dividends / distributions added to value
+//   - latest valuation per asset wins, fallback to cost basis
+// Real estate value at each month = (latest valuation OR purchase.price) minus
+// outstanding mortgage approximation (financing.loan).
+export async function computeEvolutionDualFromDB() {
+  const [contribsRes, valsRes, incomeRes, assetsRes, quotesRes] = await Promise.all([
+    pool.query(`
+      select t.date::text as date, t.amount, t.metadata, t.asset_id, a.category
+      from transactions t join assets a on a.id = t.asset_id
+      where t.type in ('contribution', 'buy')
+      order by t.date asc
+    `),
+    pool.query(`
+      select asset_id, date::text as date, value
+      from valuations
+      order by asset_id, date asc
+    `),
+    pool.query(`
+      select asset_id, date::text as date, amount
+      from transactions
+      where type in ('interest_payment', 'rent_received', 'distribution', 'dividend')
+      order by date asc
+    `),
+    pool.query(`select id, category, quote_source, metadata from assets where status = 'active'`),
+    pool.query(`
+      select distinct on (asset_id) asset_id, date::text as date, price
+      from quotes
+      where date >= current_date - 7
+      order by asset_id, date desc
+    `),
+  ]);
 
-  const earliest = events[0].date;
-  const now = new Date();
+  const quoteByAsset = new Map();
+  for (const qr of quotesRes.rows) quoteByAsset.set(qr.asset_id, Number(qr.price));
+
+  const contribsByAsset = new Map();
+  for (const c of contribsRes.rows) {
+    if (!contribsByAsset.has(c.asset_id)) contribsByAsset.set(c.asset_id, []);
+    contribsByAsset.get(c.asset_id).push({
+      date: new Date(c.date),
+      amount: Number(c.amount),
+      isMortgage: c.metadata && c.metadata.kind === 'mortgage',
+    });
+  }
+  const valsByAsset = new Map();
+  for (const v of valsRes.rows) {
+    if (!valsByAsset.has(v.asset_id)) valsByAsset.set(v.asset_id, []);
+    valsByAsset.get(v.asset_id).push({ date: new Date(v.date), value: Number(v.value) });
+  }
+  const incomeByAsset = new Map();
+  for (const ip of incomeRes.rows) {
+    if (!incomeByAsset.has(ip.asset_id)) incomeByAsset.set(ip.asset_id, []);
+    incomeByAsset.get(ip.asset_id).push({ date: new Date(ip.date), amount: Number(ip.amount) });
+  }
+
+  if (contribsRes.rows.length === 0) return [];
+  const earliest = new Date(contribsRes.rows[0].date);
+  const today = new Date();
+
   const points = [];
-  let running = 0;
-  let idx = 0;
   for (
     let d = new Date(earliest.getFullYear(), earliest.getMonth(), 1);
-    d <= now;
+    d <= today;
     d = new Date(d.getFullYear(), d.getMonth() + 1, 1)
   ) {
-    const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0);
-    while (idx < events.length && events[idx].date <= monthEnd) {
-      running += events[idx].amount;
-      idx++;
+    const monthEnd = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+
+    let totalInvested = 0;
+    let totalValue = 0;
+
+    for (const ast of assetsRes.rows) {
+      const contribs = contribsByAsset.get(ast.id) || [];
+      const equityInvested = contribs
+        .filter((c) => c.date <= monthEnd && !c.isMortgage)
+        .reduce((s, c) => s + c.amount, 0);
+      const grossBasis = contribs
+        .filter((c) => c.date <= monthEnd)
+        .reduce((s, c) => s + c.amount, 0);
+
+      totalInvested += equityInvested;
+
+      if (grossBasis === 0 && equityInvested === 0) continue;
+
+      const meta = ast.metadata || {};
+      const incomeSoFar = (incomeByAsset.get(ast.id) || [])
+        .filter((p) => p.date <= monthEnd)
+        .reduce((s, p) => s + p.amount, 0);
+
+      let assetValue;
+      if (ast.category === 'loan') {
+        // Capital outstanding + interest realized over time
+        assetValue = grossBasis + incomeSoFar;
+      } else if (ast.category === 'real_estate') {
+        const valsForAsset = (valsByAsset.get(ast.id) || []).filter((v) => v.date <= monthEnd);
+        let grossAssetValue;
+        if (valsForAsset.length > 0) {
+          grossAssetValue = valsForAsset[valsForAsset.length - 1].value;
+        } else {
+          const purchase = meta.purchase || {};
+          grossAssetValue = (Number(purchase.price) || 0) + (Number(purchase.fees) || 0);
+        }
+        const debt = meta.financing && !meta.financing.cash
+          ? Number(meta.financing.loan) || 0 : 0;
+        assetValue = grossAssetValue - debt + incomeSoFar;
+      } else {
+        // For the most recent month, prefer a fresh live quote (BTC via
+        // CoinGecko, etc.) so the chart's tail matches the headline. Past
+        // months still use historical valuations.
+        const isCurrentMonth = (
+          d.getFullYear() === today.getFullYear() &&
+          d.getMonth() === today.getMonth()
+        );
+        if (isCurrentMonth && ast.quote_source && ast.quote_source !== 'manual' && quoteByAsset.has(ast.id)) {
+          const units = (() => {
+            const m = ast.metadata || {};
+            if (ast.category === 'crypto') return Number(m.amount) || 0;
+            if (ast.category === 'etf_fund') return Number(m.shares) || 0;
+            if (ast.category === 'monetary') return Number(m.units) || 0;
+            return 0;
+          })();
+          if (units > 0) {
+            assetValue = units * quoteByAsset.get(ast.id);
+          } else {
+            assetValue = equityInvested;
+          }
+        } else {
+          const valsForAsset = (valsByAsset.get(ast.id) || []).filter((v) => v.date <= monthEnd);
+          if (valsForAsset.length > 0) {
+            assetValue = valsForAsset[valsForAsset.length - 1].value;
+          } else {
+            assetValue = equityInvested;
+          }
+        }
+      }
+
+      totalValue += assetValue;
     }
-    points.push({ month: monthLabel(d), invested: Math.round(running) });
+
+    points.push({
+      month: monthLabel(d),
+      invested: Math.round(totalInvested),
+      value: Math.round(totalValue),
+    });
   }
+
   return points;
+}
+
+// Legacy single-line evolution kept for backwards compat with the static
+// fallback in src/data/portfolio.js. Frontend now consumes the dual version.
+export async function computeEvolutionFromDB() {
+  const dual = await computeEvolutionDualFromDB();
+  return dual.map((p) => ({ month: p.month, invested: p.invested }));
 }
 
 // Money-weighted return (XIRR) — solves for the rate that makes NPV of all

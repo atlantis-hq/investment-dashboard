@@ -394,7 +394,9 @@ export function computeEvolution() {
       eventIdx++;
     }
     const label = d.toLocaleDateString('es-ES', { month: 'short', year: '2-digit' });
-    points.push({ month: label, invested: Math.round(running) });
+    // Fallback has no historical valuation data — value defaults to invested
+    // (i.e. flat unrealized return). The live API ships proper history.
+    points.push({ month: label, invested: Math.round(running), value: Math.round(running) });
   }
 
   return points;

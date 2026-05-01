@@ -63,7 +63,7 @@ export function computeRECalc(p) {
 const QUOTE_FRESHNESS_DAYS = 7;
 
 export async function buildShape() {
-  const [a, t, v, s, q] = await Promise.all([
+  const [a, t, v, s, q, ri] = await Promise.all([
     pool.query("select * from assets where status = 'active'"),
     pool.query("select asset_id, type, date::text, amount, metadata from transactions"),
     pool.query("select asset_id, date::text, value from valuations"),
@@ -75,6 +75,12 @@ export async function buildShape() {
        order by asset_id, date desc`,
       [QUOTE_FRESHNESS_DAYS],
     ),
+    pool.query(`
+      select asset_id, sum(amount)::numeric as total
+      from transactions
+      where type in ('rent_received', 'distribution', 'dividend')
+      group by asset_id
+    `),
   ]);
 
   const assets = a.rows;
@@ -101,6 +107,9 @@ export async function buildShape() {
 
   const quoteByAsset = new Map();
   for (const qr of quotes) quoteByAsset.set(qr.asset_id, qr);
+
+  const realizedIncomeByAsset = new Map();
+  for (const r of ri.rows) realizedIncomeByAsset.set(r.asset_id, Number(r.total));
 
   const investedOf = (id) => (txByAsset.get(id) || [])
     .filter((x) => x.type === 'contribution' || x.type === 'buy')
@@ -133,7 +142,13 @@ export async function buildShape() {
   for (const ast of assets) {
     const meta = ast.metadata || {};
     const invested = investedOf(ast.id);
-    const current = currentOf(ast, invested);
+    const markedToMarket = currentOf(ast, invested);
+    const realizedIncome = realizedIncomeByAsset.get(ast.id) || 0;
+    // Total wealth from this asset = mark-to-market + cumulative realized income
+    // (rent / dividends / distributions already received). For loans, the
+    // interest_payment cashflows aren't added here — they're already absorbed
+    // into the bucket value via interestEarned later.
+    const current = markedToMarket + realizedIncome;
     const returnPct = invested ? round2(((current / invested) - 1) * 100) : 0;
 
     if (ast.category === 'etf_fund') {
@@ -244,9 +259,10 @@ export async function buildShape() {
     ['vc', vcStartups],
     ['real_estate', reProps.map((r) => {
       const debt = r.financing.cash ? 0 : Number(r.financing.loan) || 0;
+      const income = realizedIncomeByAsset.get(r.id) || 0;
       return {
         invested: r.calc.equityInvested,
-        current: Number(r.purchase.currentValue) - debt,
+        current: Number(r.purchase.currentValue) - debt + income,
       };
     })],
   ];
@@ -300,9 +316,9 @@ export async function buildShape() {
     };
   })();
 
-  const { computeCashflow, computeEvolutionFromDB, computeAlerts, computeReturns } = await import('./compute.mjs');
+  const { computeCashflow, computeEvolutionDualFromDB, computeAlerts, computeReturns } = await import('./compute.mjs');
   const cashflow = computeCashflow({ loans, rentaFija });
-  const evolution = await computeEvolutionFromDB();
+  const evolution = await computeEvolutionDualFromDB();
   const alerts = computeAlerts({ loans });
 
   const partialShape = {
