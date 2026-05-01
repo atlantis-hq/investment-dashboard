@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
 import {
-  Wallet,
-  Target,
   Droplets,
   Lock,
   AlertTriangle,
@@ -21,7 +19,6 @@ import { usePortfolio } from '../hooks/usePortfolioData';
 import { useColors } from '../hooks/useColors';
 import Card from '../components/Card';
 import KPI from '../components/KPI';
-import HeroKPI from '../components/HeroKPI';
 import Badge from '../components/Badge';
 import ProgressBar from '../components/ProgressBar';
 
@@ -145,19 +142,35 @@ function Donut({ data, total, size = 200, thickness = 24 }) {
 function EvolutionChart({ data }) {
   const c = useColors();
   if (!data || data.length === 0) return null;
-  const vals = data.map((d) => d.invested);
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
+  const hasValue = data.some((d) => typeof d.value === 'number');
+  const allVals = hasValue
+    ? data.flatMap((d) => [d.invested, d.value])
+    : data.map((d) => d.invested);
+  const min = Math.min(...allVals);
+  const max = Math.max(...allVals);
   const range = max - min || 1;
   const w = 620;
   const h = 120;
-  const pts = data.map((d, i) => [
-    ((i / (data.length - 1)) * w).toFixed(1),
-    (h - ((d.invested - min) / range) * (h - 10) - 5).toFixed(1),
-  ]);
-  const linePath = pts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ');
-  const fillPath = linePath + ` L${w},${h} L0,${h} Z`;
-  const gid = 'evoGrad-' + (data.length || 0);
+  const pad = 5;
+  const projX = (i) => ((i / Math.max(1, data.length - 1)) * w).toFixed(1);
+  const projY = (n) => (h - ((n - min) / range) * (h - pad * 2) - pad).toFixed(1);
+
+  const investedPts = data.map((d, i) => [projX(i), projY(d.invested)]);
+  const valuePts = hasValue ? data.map((d, i) => [projX(i), projY(d.value)]) : null;
+
+  const investedPath = investedPts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ');
+  const valuePath = valuePts ? valuePts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ') : null;
+
+  // Gap area between value (top) and invested (bottom) where value > invested.
+  // Computed as polygon: value forward + invested reversed.
+  const gapPath = valuePts
+    ? valuePts.map((p, i) => (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]).join(' ') +
+      ' ' +
+      [...investedPts].reverse().map((p) => 'L' + p[0] + ',' + p[1]).join(' ') +
+      ' Z'
+    : null;
+
+  const gid = 'evoGap-' + (data.length || 0);
 
   return (
     <svg
@@ -169,13 +182,131 @@ function EvolutionChart({ data }) {
     >
       <defs>
         <linearGradient id={gid} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={c.gold} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={c.gold} stopOpacity="0" />
+          <stop offset="0%" stopColor={c.green} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={c.green} stopOpacity="0.04" />
         </linearGradient>
       </defs>
-      <path d={fillPath} fill={`url(#${gid})`} />
-      <path d={linePath} stroke={c.gold} strokeWidth="2" fill="none" />
+      {gapPath && <path d={gapPath} fill={`url(#${gid})`} />}
+      <path d={investedPath} stroke={c.textMuted} strokeWidth="1.6" fill="none" strokeDasharray="2 3" />
+      {valuePath && <path d={valuePath} stroke={c.green} strokeWidth="2" fill="none" />}
     </svg>
+  );
+}
+
+function GainHero({ ps, c }) {
+  const gain = Number(ps.totalReturn) || 0;
+  const totalPct = Number(ps.totalReturnPct) || 0;
+  const xirr = ps.xirrPct;
+  const hold = ps.holdYears;
+  const positive = gain >= 0;
+  const xirrPositive = (xirr ?? 0) >= 0;
+  const grossAssetValue = ps.grossAssetValue ?? null;
+  const mortgageDebt = ps.mortgageDebt ?? 0;
+
+  const labelStyle = {
+    fontSize: 10,
+    fontWeight: 500,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+    color: c.gold,
+  };
+  const subLabelStyle = {
+    fontSize: 11,
+    color: c.textMuted,
+    fontVariantNumeric: 'tabular-nums',
+    marginTop: 6,
+  };
+  const bigStyle = {
+    fontSize: 44,
+    fontWeight: 800,
+    letterSpacing: '-0.025em',
+    lineHeight: 1,
+    fontVariantNumeric: 'tabular-nums',
+    marginTop: 10,
+  };
+
+  return (
+    <div
+      style={{
+        background: `linear-gradient(135deg, ${c.goldBg}, ${c.goldBgLight})`,
+        border: `1px solid ${c.goldBorder}`,
+        borderRadius: 20,
+        padding: '24px 28px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 22,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 220px' }}>
+          <p style={labelStyle}>Ganancia</p>
+          <p style={{ ...bigStyle, color: positive ? c.green : c.red }}>
+            {(positive ? '+' : '−')}{fmt(Math.abs(gain))}
+          </p>
+          <p style={subLabelStyle}>
+            ({(positive ? '+' : '')}{totalPct.toFixed(2)}% total)
+          </p>
+        </div>
+        <div style={{ flex: '1 1 220px', textAlign: 'right' }}>
+          <p style={labelStyle}>Rent. anualizada</p>
+          <p style={{ ...bigStyle, color: xirrPositive ? c.green : c.red }}>
+            {xirr === null || xirr === undefined
+              ? '—'
+              : (xirrPositive ? '+' : '') + Number(xirr).toFixed(2) + '%/año'}
+          </p>
+          <p style={subLabelStyle}>
+            XIRR{hold !== null && hold !== undefined ? ` · ${Number(hold).toFixed(2)}y hold` : ''}
+          </p>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          gap: 28,
+          flexWrap: 'wrap',
+          paddingTop: 16,
+          borderTop: `1px solid ${c.border}`,
+        }}
+      >
+        <div>
+          <p style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: c.textSecondary }}>
+            Total invertido
+          </p>
+          <p style={{ fontSize: 18, fontWeight: 600, color: c.text, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+            {fmt(ps.totalInvested)}
+          </p>
+        </div>
+        <div>
+          <p style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: c.textSecondary }}>
+            Valor actual
+          </p>
+          <p style={{ fontSize: 18, fontWeight: 600, color: c.text, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+            {fmt(ps.totalValue)}
+          </p>
+        </div>
+        {mortgageDebt > 0 && grossAssetValue !== null && (
+          <>
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: c.textSecondary }}>
+                Activos brutos
+              </p>
+              <p style={{ fontSize: 18, fontWeight: 600, color: c.text, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+                {fmt(grossAssetValue)}
+              </p>
+            </div>
+            <div>
+              <p style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: c.textSecondary }}>
+                Deuda hipotecaria
+              </p>
+              <p style={{ fontSize: 18, fontWeight: 600, color: c.red, fontVariantNumeric: 'tabular-nums', marginTop: 4 }}>
+                −{fmt(mortgageDebt)}
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -338,30 +469,18 @@ export default function Overview({ setPage }) {
         </div>
       )}
 
-      {/* Hero KPI row — split hero + 3 neutral */}
+      {/* Hero — ganancia + XIRR with secondary metrics */}
+      <GainHero ps={ps} c={c} />
+
+      {/* Liquidity / illiquid breakdown */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1.4fr 1fr 1fr 1fr',
+          gridTemplateColumns: '1fr 1fr',
           gap: 16,
         }}
         className="kpi-grid"
       >
-        <HeroKPI
-          label="Patrimonio total"
-          value={fmt(ps.totalValue)}
-          delta={ps.totalReturnPct}
-          deltaAbs={ps.totalReturn}
-          icon={Wallet}
-        />
-        <KPI
-          label="Rent. anual (CAGR)"
-          value={(ps.annualizedReturnPct >= 0 ? '+' : '') + ps.annualizedReturnPct.toFixed(2) + '%'}
-          sub="Desde ene 2024"
-          icon={Target}
-          iconColor={c.green}
-          valueColor={c.green}
-        />
         <KPI
           label="Liquidez"
           value={fmt(liquidez)}
